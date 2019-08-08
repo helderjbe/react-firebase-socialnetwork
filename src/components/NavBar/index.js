@@ -77,7 +77,6 @@ const Input = withStyles(theme => ({
   },
   input: {
     padding: theme.spacing(1, 1, 1, 7),
-    transition: theme.transitions.create('width'),
     width: '100%',
     [theme.breakpoints.up('md')]: {
       width: 200
@@ -90,25 +89,13 @@ HideOnScroll.propTypes = {
 };
 
 class NavBar extends Component {
-  state = { accountMenu: null };
-
-  handleAccountMenuOpen = event => {
-    this.setState({ accountMenu: event.currentTarget });
-  };
-
-  handleAccountMenuClose = () => {
-    this.setState({ accountMenu: null });
-  };
-
   handleSignOut = () => {
     const { api } = this.props;
 
     api.doSignOut();
-    this.setState({ accountMenu: null });
   };
 
   render() {
-    const { accountMenu } = this.state;
     const { authstate } = this.props;
 
     return (

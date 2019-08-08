@@ -7,17 +7,20 @@
     "shell": "firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "config:set": "firebase functions:config:set algolia.app_id='RCTBMZAZV0' algolia.api_key='0c88d995b5e1f65286348ec50b72a4c2' algolia.index_name='groupsPublic'"
   },
   "engines": {
     "node": "8"
   },
   "dependencies": {
-    "firebase-admin": "^8.0.0",
-    "firebase-functions": "^3.0.0"
+    "algoliasearch": "^3.33.0",
+    "deepmerge": "^4.0.0",
+    "eslint": "^5.16.0",
+    "firebase-admin": "^8.3.0",
+    "firebase-functions": "^3.2.0"
   },
   "devDependencies": {
-    "eslint": "^5.12.0",
     "eslint-plugin-promise": "^4.0.1",
     "firebase-functions-test": "^0.1.6"
   },

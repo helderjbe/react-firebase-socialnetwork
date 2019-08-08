@@ -19,7 +19,7 @@ import Dialog from '@material-ui/core/Dialog';
 import Box from '@material-ui/core/Box';
 import Edit from '@material-ui/icons/Edit';
 
-import defaultAvatar from './default.png';
+import defaultAvatar from '../../../common/images/defaultAvatar.png';
 import { withStyles } from '@material-ui/core';
 
 const EditAvatar = withStyles(theme => ({
@@ -45,12 +45,8 @@ class UserProfile extends Component {
     avatar: false,
     name: '',
     bio: '',
-    interests: '',
     location: '',
-    facebook: '',
-    instagram: '',
-    twitter: '',
-    linkedin: '',
+    contact: '',
     imageSrc: null,
     crop: { x: 0, y: 0 },
     zoom: 1,
@@ -87,17 +83,14 @@ class UserProfile extends Component {
       name,
       avatar,
       bio,
-      interests,
+      contact,
       location,
-      facebook,
-      instagram,
-      twitter,
-      linkedin,
-      croppedImage
+      croppedImage,
+      imageSrc
     } = this.state;
     const { api, authstate, history } = this.props;
 
-    if (!!croppedImage) {
+    if (!!imageSrc) {
       await api
         .refUserPublicAvatar(authstate.uid)
         .putString(croppedImage, 'data_url');
@@ -107,15 +100,11 @@ class UserProfile extends Component {
       .refUserPublicById(authstate.uid)
       .set(
         {
-          avatar: avatar || !!croppedImage,
+          avatar: avatar || !!imageSrc,
           name,
           bio,
-          interests,
           location,
-          facebook,
-          instagram,
-          twitter,
-          linkedin
+          contact
         },
         { merge: true }
       )
@@ -176,12 +165,8 @@ class UserProfile extends Component {
     const {
       name,
       bio,
-      interests,
       location,
-      facebook,
-      instagram,
-      twitter,
-      linkedin,
+      contact,
       imageSrc,
       croppedImage,
       imageCropDialog,
@@ -275,6 +260,7 @@ class UserProfile extends Component {
           required
           value={name}
           onChange={this.onChange}
+          placeholder="John Smith"
         />
         <TextField
           variant="outlined"
@@ -286,6 +272,7 @@ class UserProfile extends Component {
           autoComplete="location"
           value={location}
           onChange={this.onChange}
+          placeholder="London, UK"
         />
         <Box mt={3} mb={2}>
           <Divider variant="middle" />
@@ -299,67 +286,25 @@ class UserProfile extends Component {
           id="bio"
           label="Bio"
           name="bio"
-          autoComplete="bio"
           value={bio}
+          placeholder={
+            "Fiction enthusiast. There isn't a fiction book I don't know.\n\nMy hobbies include traveling, reading, hiking."
+          }
           onChange={this.onChange}
         />
         <TextField
           variant="outlined"
           margin="normal"
+          multiline
+          rows="4"
           fullWidth
-          id="interests"
-          label="Interests"
-          name="interests"
-          autoComplete="interests"
-          value={interests}
+          id="contact"
+          label="Contact"
+          name="contact"
+          value={contact}
           onChange={this.onChange}
-        />
-        <Box mt={3} mb={2}>
-          <Divider variant="middle" />
-        </Box>
-        <TextField
-          variant="outlined"
-          margin="normal"
-          fullWidth
-          id="facebook"
-          label="Facebook"
-          name="facebook"
-          autoComplete="facebook"
-          value={facebook}
-          onChange={this.onChange}
-        />
-        <TextField
-          variant="outlined"
-          margin="normal"
-          fullWidth
-          id="instagram"
-          label="Instagram"
-          name="instagram"
-          autoComplete="instagram"
-          value={instagram}
-          onChange={this.onChange}
-        />
-        <TextField
-          variant="outlined"
-          margin="normal"
-          fullWidth
-          id="twitter"
-          label="Twitter"
-          name="twitter"
-          autoComplete="twitter"
-          value={twitter}
-          onChange={this.onChange}
-        />
-        <TextField
-          variant="outlined"
-          margin="normal"
-          fullWidth
-          id="linkedin"
-          label="LinkedIn"
-          name="linkedin"
-          autoComplete="linkedin"
-          value={linkedin}
-          onChange={this.onChange}
+          placeholder={'Facebook: ...\nTwitter: ...'}
+          helperText="Share your social media accounts, e-mails, etc"
         />
         <Button
           type="submit"

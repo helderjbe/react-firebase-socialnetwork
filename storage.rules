@@ -1,11 +1,14 @@
 service firebase.storage {
   match /b/{bucket}/o {
-    match /groups/{gid}/public/{allFiles=**} {
+    match /groups/{gid}/public/images/banner.jpeg {
       allow read: if true;
-      allow write: if gid in request.auth.token.groups;
+      allow write: if 'groups' in request.auth.token
+                    && gid in request.auth.token.groups
+                    && request.auth.token.groups[gid] == 'admin';
     }
     match /users/{uid}/public/{allFiles=**} {
-      allow read, write: if request.auth.uid == uid;
+      allow read: if 'uid' in request.auth;
+      allow write: if request.auth.uid == uid;
     }
   }
 }

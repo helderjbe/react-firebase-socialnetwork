@@ -48,7 +48,13 @@ class BottomNav extends Component {
           value={ROUTES.HOME}
           icon={<Home />}
         />
-        <NavAction label="My Groups" value="myGroups" icon={<Group />} />
+        <NavAction
+          component={Link}
+          to={ROUTES.GROUPS}
+          label="My Groups"
+          value={ROUTES.GROUPS}
+          icon={<Group />}
+        />
         <NavAction
           component={Link}
           to={ROUTES.SETTINGS}

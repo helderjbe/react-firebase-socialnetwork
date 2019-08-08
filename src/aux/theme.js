@@ -4,9 +4,9 @@ import grey from '@material-ui/core/colors/grey';
 export default {
   palette: {
     primary: {
-      light: lightBlue[600],
-      main: lightBlue[700],
-      dark: lightBlue[800],
+      light: lightBlue[100],
+      main: lightBlue[500],
+      dark: lightBlue[700],
       contrastText: grey[50]
     },
     secondary: {

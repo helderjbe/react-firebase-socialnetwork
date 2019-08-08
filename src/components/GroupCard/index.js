@@ -1,12 +1,14 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { withRouter } from 'react-router-dom';
+import * as ROUTES from '../../constants/routes';
+
 import moment from 'moment';
 
 import { withFirebase } from '../Firebase';
 import { withUserSession } from '../Session';
 
-import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
 import IconButton from '@material-ui/core/IconButton';
@@ -21,10 +23,12 @@ import Grid from '@material-ui/core/Grid';
 import Box from '@material-ui/core/Box';
 
 import Group from '@material-ui/icons/Group';
+import AddBox from '@material-ui/icons/AddBox';
 
 import ApplicationDialog from './ApplicationDialog';
 
 import defaultBanner from '../../common/images/defaultBanner.jpg';
+import { CardActionArea } from '@material-ui/core';
 
 const GroupGridListTileBar = withStyles({
   root: {
@@ -41,11 +45,11 @@ class GroupCard extends Component {
   state = { groupImgSrc: defaultBanner, applicationDialog: false };
 
   componentDidMount() {
-    const { id, api, banner } = this.props;
+    const { gid, api, banner } = this.props;
 
     if (banner) {
       api
-        .refGroupPublicBanner(id)
+        .refGroupPublicBanner(gid)
         .getDownloadURL()
         .then(url => {
           this.setState({ groupImgSrc: url });
@@ -61,8 +65,14 @@ class GroupCard extends Component {
   };
 
   handleApplicationDialogOpen = () => {
-    this.setState({ applicationDialog: true });
+    const { authstate, history } = this.props;
+    if (authstate) {
+      this.setState({ applicationDialog: true });
+    } else {
+      history.push(ROUTES.SIGN_IN);
+    }
   };
+
   render() {
     const { groupImgSrc, applicationDialog } = this.state;
     const {
@@ -71,7 +81,7 @@ class GroupCard extends Component {
       limit,
       memberCount,
       tags,
-      id,
+      gid,
       authstate,
       api,
       updatedAt,
@@ -79,8 +89,8 @@ class GroupCard extends Component {
     } = this.props;
 
     return (
-      <Grid item xs={12}>
-        <Card>
+      <>
+        <CardActionArea onClick={this.handleApplicationDialogOpen}>
           <GridListTile component="div">
             <img
               src={groupImgSrc}
@@ -89,62 +99,53 @@ class GroupCard extends Component {
             />
             <GroupGridListTileBar
               title={title}
-              subtitle={moment(updatedAt.toDate()).fromNow()}
+              subtitle={`Updated ${moment(updatedAt.toDate()).fromNow()}`}
               titlePosition="top"
               actionPosition="right"
             />
           </GridListTile>
-          <Box mt={1} mx={2} lineHeight="1.8rem">
-            <Chip
-              avatar={
-                <Avatar>
-                  <Group />
-                </Avatar>
-              }
-              size="small"
-              label={`${memberCount} / ${limit} members`}
-              color="primary"
-            />{' '}
-            {tags &&
-              tags.map((label, index) => (
-                <span key={`Tags ${index}`}>
-                  <Chip size="small" label={label} />{' '}
-                </span>
-              ))}
-          </Box>
-          <CardContent>
-            <Typography
-              paragraph
-              align="justify"
-              variant="body2"
-              style={{ whiteSpace: 'pre-line' }}
-            >
-              {details}
-            </Typography>
-          </CardContent>
-          <CardActions>
-            {questions && Object.keys(questions).length && (
-              <ApplicationDialog
-                gid={id}
-                uid={authstate.uid}
-                api={api}
-                applicationDialog={applicationDialog}
-                handleApplicationDialogClose={this.handleApplicationDialogClose}
-                questions={questions}
-              />
-            )}
-            <Box ml="auto">
-              <Button
-                color="primary"
-                size="large"
-                onClick={this.handleApplicationDialogOpen}
-              >
-                Join
-              </Button>
-            </Box>
-          </CardActions>
-        </Card>
-      </Grid>
+        </CardActionArea>
+        <Box mt={1} mx={2} lineHeight="1.8rem">
+          <Chip
+            avatar={
+              <Avatar>
+                <Group />
+              </Avatar>
+            }
+            size="small"
+            label={`${memberCount} ${limit !== 0 ? `/ ${limit} ` : ''}${
+              limit !== 0 || memberCount !== 1 ? 'members' : 'member'
+            }`}
+            color="primary"
+          />{' '}
+          {tags &&
+            tags.map((label, index) => (
+              <span key={`Tags ${index}`}>
+                <Chip size="small" label={label} />{' '}
+              </span>
+            ))}
+        </Box>
+        <CardContent>
+          <Typography
+            paragraph
+            align="justify"
+            variant="body2"
+            style={{ whiteSpace: 'pre-line' }}
+          >
+            {details}
+          </Typography>
+        </CardContent>
+        {authstate && (
+          <ApplicationDialog
+            gid={gid}
+            uid={authstate.uid}
+            api={api}
+            applicationDialog={applicationDialog}
+            handleApplicationDialogClose={this.handleApplicationDialogClose}
+            questions={questions}
+          />
+        )}
+      </>
     );
   }
 }
@@ -153,16 +154,14 @@ GroupCard.propTypes = {
   questions: PropTypes.arrayOf(PropTypes.string),
   authstate: PropTypes.object,
   api: PropTypes.object.isRequired,
-  id: PropTypes.string.isRequired,
+  gid: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   banner: PropTypes.bool,
-  misc: PropTypes.arrayOf(PropTypes.string),
-  details: PropTypes.string.isRequired,
-  languages: PropTypes.arrayOf(PropTypes.string),
-  limit: PropTypes.number.isRequired,
+  details: PropTypes.string,
+  limit: PropTypes.number,
   memberCount: PropTypes.number.isRequired,
   tags: PropTypes.arrayOf(PropTypes.string),
   updatedAt: PropTypes.object.isRequired
 };
 
-export default withFirebase(withUserSession(GroupCard));
+export default withRouter(withFirebase(withUserSession(GroupCard)));

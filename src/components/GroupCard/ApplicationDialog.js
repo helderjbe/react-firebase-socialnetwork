@@ -15,8 +15,12 @@ class ApplicationDialog extends Component {
 
     this.INITIAL_STATE = { questions: {}, error: null };
 
-    for (let i = 0; i < Object.keys(questions).length; i++) {
-      this.INITIAL_STATE.questions[questions[i]] = '';
+    if (questions) {
+      for (let i = 0; i < Object.keys(questions).length; i++) {
+        if (questions[i].trim() !== '') {
+          this.INITIAL_STATE.questions[questions[i]] = '';
+        }
+      }
     }
 
     this.state = { ...this.INITIAL_STATE };
@@ -25,12 +29,15 @@ class ApplicationDialog extends Component {
   onSubmit = event => {
     event.preventDefault();
 
-    const { api, gid, uid } = this.props;
+    const { api, gid, uid, handleApplicationDialogClose } = this.props;
+    const { questions } = this.state;
 
     api
       .refApplicationsByUserId(gid, uid)
       .set({
-        ...this.state.questions,
+        application: {
+          ...questions
+        },
         createdAt: api.firebase.firestore.FieldValue.serverTimestamp()
       })
       .then(() => {
@@ -39,6 +46,8 @@ class ApplicationDialog extends Component {
       .catch(error => {
         this.setState({ error });
       });
+
+    handleApplicationDialogClose();
   };
 
   onChange = event => {
@@ -52,10 +61,6 @@ class ApplicationDialog extends Component {
     const { applicationDialog, handleApplicationDialogClose } = this.props;
     const { questions, error } = this.state;
 
-    const isInvalid = Object.values(questions).some(
-      value => value.trim().length <= 0
-    );
-
     return (
       <Dialog
         open={applicationDialog}
@@ -67,8 +72,9 @@ class ApplicationDialog extends Component {
           <DialogTitle id="application">Application</DialogTitle>
           <DialogContent>
             <Typography color="primary" paragraph>
-              The admin(s) of this group require you to answer the following
-              questions
+              {Object.keys(questions).every(key => key.length <= 0)
+                ? 'This group does not require further info. Do you wish to apply?'
+                : 'The admin(s) of this group require you to answer the following questions'}
             </Typography>
             {Object.keys(questions).map(
               (question, index) =>
@@ -91,12 +97,7 @@ class ApplicationDialog extends Component {
             )}
           </DialogContent>
           <DialogActions>
-            <Button
-              type="submit"
-              disabled={isInvalid}
-              variant="contained"
-              color="primary"
-            >
+            <Button type="submit" variant="contained" color="primary">
               Apply
             </Button>
             <Button

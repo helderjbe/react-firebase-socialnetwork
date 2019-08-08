@@ -19,6 +19,11 @@ import PasswordForgetPage from './pages/PasswordForget';
 import UserSettingsPage from './pages/UserSettings';
 import NewGroupPage from './pages/Groups/New';
 import EditGroupPage from './pages/Groups/Edit';
+import MembersGroupPage from './pages/Groups/Members';
+import ApplicationsGroupPage from './pages/Groups/Applications';
+import GroupDetailsPage from './pages/Groups/Details';
+import GroupPage from './pages/Groups/Group';
+import GroupsPage from './pages/Groups';
 
 import NavBar from './components/NavBar';
 import SideBar from './components/SideBar';
@@ -49,8 +54,22 @@ const App = props => {
                 component={PasswordForgetPage}
               />
               <Route path={ROUTES.SETTINGS} component={UserSettingsPage} />
+              <Route path={ROUTES.GROUPS} exact component={GroupsPage} />
               <Route path={ROUTES.GROUPS_NEW} component={NewGroupPage} />
+              <Route path={ROUTES.GROUPS_ID} exact component={GroupPage} />
+              <Route
+                path={ROUTES.GROUPS_ID_APPLICATIONS}
+                component={ApplicationsGroupPage}
+              />
               <Route path={ROUTES.GROUPS_ID_EDIT} component={EditGroupPage} />
+              <Route
+                path={ROUTES.GROUPS_ID_DETAILS}
+                component={GroupDetailsPage}
+              />
+              <Route
+                path={ROUTES.GROUPS_ID_MEMBERS}
+                component={MembersGroupPage}
+              />
             </Switch>
           </Grid>
           <MediaQuerySmUp>

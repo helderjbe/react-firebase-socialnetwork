@@ -14,7 +14,7 @@ import TextField from '@material-ui/core/TextField';
 class NewGroup extends Component {
   state = {
     title: '',
-    limit: 2,
+    limit: 0,
     tags: [],
 
     error: null
@@ -45,7 +45,7 @@ class NewGroup extends Component {
     batch
       .commit()
       .then(() => {
-        history.push(`${ROUTES.GROUPS}/${newDocId}/edit`);
+        history.push(ROUTES.GROUPS_ID_EDIT.replace(':gid', newDocId));
       })
       .catch(error => {
         this.setState({ error });
@@ -115,8 +115,8 @@ class NewGroup extends Component {
           name="limit"
           value={limit}
           onChange={this.onChange}
-          inputProps={{ min: '2' }}
-          helperText="Leave blank for no limit"
+          inputProps={{ min: 0 }}
+          helperText="0 = Unlimited"
         />
         <Button
           type="submit"

@@ -47,7 +47,7 @@ class EditGroup extends Component {
     title: '',
     details: '',
     questions: ['', '', ''],
-    limit: 2,
+    limit: 0,
     tags: [],
 
     imageSrc: null,
@@ -82,7 +82,8 @@ class EditGroup extends Component {
       })
       .then(url => {
         url && this.setState({ croppedImage: url });
-      });
+      })
+      .catch(error => this.setState({ error }));
   }
 
   onSubmit = async event => {
@@ -95,7 +96,8 @@ class EditGroup extends Component {
       limit,
       tags,
       questions,
-      croppedImage
+      croppedImage,
+      imageSrc
     } = this.state;
     const {
       api,
@@ -105,7 +107,7 @@ class EditGroup extends Component {
       }
     } = this.props;
 
-    if (!!croppedImage) {
+    if (!!imageSrc) {
       await api.doAuthStateReload(); // Refresh the token (updated from cloud functions) to be able to upload the image to storage
 
       await api.refGroupPublicBanner(gid).putString(croppedImage, 'data_url');
@@ -114,7 +116,7 @@ class EditGroup extends Component {
     api
       .refGroupPublicById(gid)
       .update({
-        banner: banner || !!croppedImage,
+        banner: banner || !!imageSrc,
         title,
         details,
         limit: Number(limit),
@@ -330,8 +332,8 @@ class EditGroup extends Component {
           name="limit"
           value={limit}
           onChange={this.onChange}
-          inputProps={{ min: '2' }}
-          helperText="Leave blank for no limit"
+          inputProps={{ min: 0 }}
+          helperText="0 = Unlimited"
         />
         <Box mt={3} mb={2}>
           <Divider variant="middle" />

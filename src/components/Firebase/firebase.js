@@ -40,8 +40,16 @@ export default class Firebase {
 
   refGroupPrivateById = gid => this.refGroupsPrivate().doc(gid);
 
+  // Group Messages
+  refGroupMessages = () => this.firestore.collection('groupMessages');
+
+  refGroupMessagesByGroupId = gid =>
+    this.refGroupMessages()
+      .doc(gid)
+      .collection('messages');
+
   // Users Public
-  refUsersPublic = () => this.firestore.collection('usersPublic');
+  refUsersPublic = () => this.firestore.collection('usersPublic'); // TODO: make sure user fills their name and validates email
 
   refUserPublicById = uid => this.refUsersPublic().doc(uid);
 
@@ -71,6 +79,8 @@ export default class Firebase {
   doUpdatePassword = password => this.auth.currentUser.updatePassword(password);
 
   doAuthStateReload = () => this.auth.currentUser.getIdToken(true);
+
+  doGetIdTokenResult = () => this.auth.currentUser.getIdTokenResult();
 
   // *** Storage API ***
 

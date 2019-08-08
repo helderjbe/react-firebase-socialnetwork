@@ -12,6 +12,9 @@
 4 - Firebase Quotas
 4.1 - Set up quotas for firestore
 4.2 - Configure Billing Account to remove quota restrictions
+5 - Firebase production project
+5.1 - Change env variables for production
+5.2 - Change index name of algolia in functions
 
 # TODO
 

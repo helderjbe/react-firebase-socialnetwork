@@ -1,9 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import Grid from '@material-ui/core/Grid';
+import { Link } from 'react-router-dom';
+import * as ROUTES from '../../constants/routes';
 
 import { withFirebase } from '../../components/Firebase';
+
+import Grid from '@material-ui/core/Grid';
+import Card from '@material-ui/core/Card';
 
 import CreateGroupLink from '../../components/CreateGroupLink';
 import GroupCard from '../../components/GroupCard';
@@ -17,18 +21,17 @@ class HomePage extends Component {
     api
       .refGroupsPublic()
       .orderBy('createdAt', 'desc')
-      .limit(5)
+      .limit(20)
       .get()
       .then(snapshot => {
         snapshot.forEach(doc => {
           this.setState(prevState => ({
-            data: [...prevState.data, { ...doc.data(), id: doc.id }]
+            data: [...prevState.data, { ...doc.data(), gid: doc.id }]
           }));
         });
       })
       .catch(error => {
         this.setState({ errorMsg: error.message });
-        console.error(`${error.message} Please try again`);
       });
   }
 
@@ -37,10 +40,20 @@ class HomePage extends Component {
 
     return (
       <Grid container spacing={2}>
-        <CreateGroupLink />
+        <Grid item xs={12}>
+          <Link to={ROUTES.GROUPS_NEW} style={{ textDecoration: 'none' }}>
+            <Card>
+              <CreateGroupLink />
+            </Card>
+          </Link>
+        </Grid>
         {errorMsg === ''
           ? data.map((entry, index) => (
-              <GroupCard {...entry} key={`group ${index}`} />
+              <Grid item xs={12} key={`group ${index}`}>
+                <Card>
+                  <GroupCard {...entry} />
+                </Card>
+              </Grid>
             ))
           : errorMsg}
       </Grid>
@@ -49,6 +62,7 @@ class HomePage extends Component {
 }
 
 HomePage.propTypes = {
+  // TODO: Complete all proptypes in all files
   api: PropTypes.object.isRequired
 };
 
