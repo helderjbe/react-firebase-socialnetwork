@@ -26,26 +26,17 @@ class NewGroup extends Component {
     const { title, limit, tags } = this.state;
     const { api, authstate, history } = this.props;
 
-    const batch = api.firestore.batch();
-    const newDocId = api.refGroupPublicGenId();
-
-    batch.set(api.refGroupPublicById(newDocId), {
-      title,
-      limit: Number(limit),
-      tags,
-      memberCount: 1,
-      createdAt: api.firebase.firestore.FieldValue.serverTimestamp(),
-      updatedAt: api.firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    batch.set(api.refGroupPrivateById(newDocId), {
-      admins: [authstate.uid]
-    });
-
-    batch
-      .commit()
-      .then(() => {
-        history.push(ROUTES.GROUPS_ID_EDIT.replace(':gid', newDocId));
+    api
+      .refGroups()
+      .add({
+        title,
+        limit: Number(limit) === 1 ? 2 : Number(limit),
+        tags,
+        founder: authstate.uid,
+        createdAt: api.firebase.firestore.FieldValue.serverTimestamp()
+      })
+      .then(doc => {
+        history.push(ROUTES.GROUPS_ID_EDIT.replace(':gid', doc.id));
       })
       .catch(error => {
         this.setState({ error });
@@ -107,7 +98,7 @@ class NewGroup extends Component {
           onDelete={this.onTagDelete}
         />
         <TextField
-          type="number" //TODO: needs to be > 2
+          type="number"
           variant="outlined"
           margin="normal"
           fullWidth

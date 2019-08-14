@@ -49,7 +49,6 @@ class PasswordForget extends Component {
           margin="normal"
           required
           fullWidth
-          id="email"
           label="Email Address"
           name="email"
           autoComplete="email"

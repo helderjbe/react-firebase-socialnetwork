@@ -1,101 +1,161 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { withRouter } from 'react-router-dom';
+import InfiniteScroll from 'react-infinite-scroller';
+
+import { withRouter, Link } from 'react-router-dom';
+import * as ROUTES from '../../../constants/routes';
 
 import { withProtectedRoute } from '../../../components/Session';
 
 import Card from '@material-ui/core/Card';
 import Grid from '@material-ui/core/Grid';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import IconButton from '@material-ui/core/IconButton';
+import ArrowBack from '@material-ui/icons/ArrowBack';
+import Close from '@material-ui/icons/Close';
 
 import MemberRow from '../../../components/MemberRow';
-import { CardContent } from '@material-ui/core';
+import { CardContent, Box, withStyles } from '@material-ui/core';
+
+import LeaveDialog from './leaveGroup';
+
+const LeaveButton = withStyles(theme => ({
+  root: {
+    color: theme.palette.error.main
+  }
+}))(IconButton);
 
 class MembersGroupPage extends Component {
-  state = { errorMsg: '', admins: [], members: [], profileIdOpen: null };
+  state = {
+    errorMsg: '',
+    data: [],
+    userData: {},
+    leaveDialogOpen: false,
+    profileIdOpen: null,
+    hasMore: true
+  };
 
   componentDidMount() {
+    this.fetchMembers();
+  }
+
+  handleLeaveDialog = () => {
+    this.setState(state => ({ leaveDialogOpen: !state.leaveDialogOpen }));
+  };
+
+  fetchMembers = () => {
+    const snapshotLimit = 25;
+
+    const orderBy = 'createdAt';
+
     const {
       api,
       match: {
         params: { gid }
       }
     } = this.props;
+    const { data, hasMore } = this.state;
 
-    api
-      .refGroupPrivateById(gid)
+    if (!hasMore || this.isFetching) return false;
+    this.isFetching = true;
+
+    const query = data.length
+      ? api
+          .refGroupMembers(gid)
+          .orderBy(orderBy, 'desc')
+          .startAfter(data[data.length - 1][orderBy])
+          .limit(snapshotLimit)
+      : api
+          .refGroupMembers(gid)
+          .orderBy(orderBy, 'desc')
+          .limit(snapshotLimit);
+
+    query
       .get()
-      .then(doc => {
-        this.admins = doc.data().admins;
-        this.members = doc.data().members;
-
-        this.onRequestUserList(6);
+      .then(snapshots => {
+        snapshots.docs.forEach(snapshot => {
+          api
+            .refUserById(snapshot.id)
+            .get()
+            .then(userSnapshot => {
+              this.setState(state => ({
+                data: [...state.data, { ...snapshot.data(), uid: snapshot.id }],
+                userData: { [userSnapshot.id]: { ...userSnapshot.data() } }
+              }));
+            });
+        });
+        return snapshots.docs.length;
       })
-      .catch(error => console.log(error.message));
-  }
-
-  onRequestUserList = async amount => {
-    const { api } = this.props;
-
-    for (let i = 0; i < amount; amount++) {
-      if (this.admins && this.admins.length) {
-        await api
-          .refUserPublicById(this.admins.shift())
-          .get()
-          .then(doc => {
-            this.setState(state => ({
-              admins: [...state.admins, { data: doc.data(), uid: doc.id }]
-            }));
-          });
-        continue;
-      }
-      if (this.members && this.members.length) {
-        await api
-          .refUserPublicById(this.members.shift())
-          .get()
-          .then(doc => {
-            this.setState(state => ({
-              members: [...state.members, { data: doc.data(), uid: doc.id }]
-            }));
-          });
-        continue;
-      }
-      break;
-    }
+      .then(snapshotLength => {
+        if (snapshotLength < snapshotLimit)
+          return this.setState({ hasMore: false });
+      })
+      .then(() => (this.isFetching = false))
+      .catch(error => {
+        this.setState({ errorMsg: error.message });
+      });
   };
 
   render() {
-    const { errorMsg, admins, members } = this.state;
+    const { errorMsg, data, hasMore, userData, leaveDialogOpen } = this.state;
+    const {
+      match: {
+        params: { gid }
+      },
+      authstate,
+      api
+    } = this.props;
 
     return (
       <>
-        <Grid container spacing={1}>
-          {admins.length === 0 && members.length === 0 && (
-            <Grid item xs={12}>
-              <Card>
-                <CardContent>No other members yet</CardContent>
-              </Card>
-            </Grid>
-          )}
-          {errorMsg === ''
-            ? admins.map((entry, index) => (
-                <Grid item xs={12} key={`memberrow admin ${index}`}>
-                  <Card>
-                    <MemberRow {...entry} />
-                  </Card>
-                </Grid>
-              ))
-            : errorMsg}
-          {errorMsg === ''
-            ? members.map((entry, index) => (
-                <Grid item xs={12} key={`memberrow member ${index}`}>
-                  <Card>
-                    <MemberRow {...entry} />
-                  </Card>
-                </Grid>
-              ))
-            : null}
+        <Box mb={1} display="flex">
+          <Box flexGrow={1}>
+            <IconButton
+              aria-label="back"
+              component={Link}
+              to={ROUTES.GROUPS_ID.replace(':gid', gid)}
+            >
+              <ArrowBack />
+            </IconButton>
+          </Box>
+          <LeaveButton onClick={this.handleLeaveDialog}>
+            <Close />
+          </LeaveButton>
+        </Box>
+        <Grid
+          component={InfiniteScroll}
+          container
+          spacing={1}
+          initialLoad={false}
+          loadMore={this.fetchMembers}
+          hasMore={hasMore}
+          loader={
+            <Box width="100%" textAlign="center" my={2} key={0}>
+              <CircularProgress />
+            </Box>
+          }
+        >
+          {data.map((entry, index) => {
+            console.log(entry);
+            return (
+              <Grid item xs={12} key={`memberrow ${index}`}>
+                <Card>
+                  <MemberRow {...entry} user={userData[entry.uid]} />
+                </Card>
+              </Grid>
+            );
+          })}
+
+          {errorMsg !== '' ? errorMsg : null}
         </Grid>
+        <LeaveDialog
+          handleClose={this.handleLeaveDialog}
+          open={leaveDialogOpen}
+          authstate={authstate}
+          api={api}
+          gid={gid}
+        />
       </>
     );
   }

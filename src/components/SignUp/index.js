@@ -29,7 +29,7 @@ class SignUp extends Component {
       .doCreateUserWithEmailAndPassword(email, password)
       .then(_authUser => {
         this.setState({ ...INITIAL_STATE });
-        history.push(ROUTES.HOME);
+        history.push(ROUTES.SETTINGS);
       })
       .catch(error => {
         this.setState({ error });
@@ -53,7 +53,6 @@ class SignUp extends Component {
           margin="normal"
           required
           fullWidth
-          id="email"
           label="Email Address"
           name="email"
           autoComplete="email"
@@ -69,7 +68,6 @@ class SignUp extends Component {
           name="password"
           label="Password"
           type="password"
-          id="password"
           value={password}
           onChange={this.onChange}
         />
@@ -81,7 +79,6 @@ class SignUp extends Component {
           name="confirmPassword"
           label="Confirm Password"
           type="password"
-          id="confirmPassword"
           value={confirmPassword}
           onChange={this.onChange}
         />

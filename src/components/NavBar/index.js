@@ -22,7 +22,6 @@ import MenuItem from '@material-ui/core/MenuItem';
 
 import Search from '@material-ui/icons/Search';
 import AccountCircle from '@material-ui/icons/AccountCircle';
-import Notifications from '@material-ui/icons/Notifications';
 import ExitToApp from '@material-ui/icons/ExitToApp';
 
 import { IconButton } from '@material-ui/core';
@@ -122,9 +121,6 @@ class NavBar extends Component {
             </SearchContainer>
             {authstate ? (
               <>
-                <IconButton>
-                  <Notifications color="secondary" />
-                </IconButton>
                 <IconButton
                   component={Link}
                   to={ROUTES.SIGN_IN}

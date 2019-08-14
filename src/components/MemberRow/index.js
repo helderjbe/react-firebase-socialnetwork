@@ -1,17 +1,20 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import moment from 'moment';
+
 import { withFirebase } from '../Firebase';
 
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListItemAvatar from '@material-ui/core/ListItemAvatar';
+import Box from '@material-ui/core/Box';
 import Avatar from '@material-ui/core/Avatar';
 import Typography from '@material-ui/core/Typography';
 
 import UserProfileModal from '../UserProfileModal';
 
-import defaultBanner from '../../common/images/defaultBanner.jpg';
+import defaultAvatar from '../../common/images/defaultAvatar.jpg';
 
 class MemberRow extends Component {
   state = { avatarUrl: null, profileOpen: false };
@@ -19,13 +22,13 @@ class MemberRow extends Component {
   componentDidMount() {
     const {
       api,
-      data: { avatar },
+      user: { avatar },
       uid
     } = this.props;
 
     if (avatar) {
       api
-        .refUserPublicAvatar(uid)
+        .refUserAvatar(uid)
         .getDownloadURL()
         .then(url => {
           this.setState({
@@ -45,8 +48,9 @@ class MemberRow extends Component {
 
   render() {
     const {
-      data: { name, bio, location, contact },
-      uid
+      role,
+      createdAt,
+      user: { name, about }
     } = this.props;
 
     const { avatarUrl, profileOpen } = this.state;
@@ -60,16 +64,20 @@ class MemberRow extends Component {
           alignItems="flex-start"
         >
           <ListItemAvatar>
-            <Avatar alt="Banner" src={avatarUrl || defaultBanner} />
+            <Avatar alt="Profile Picture" src={avatarUrl || defaultAvatar} />
           </ListItemAvatar>
           <ListItemText
             primary={name}
             secondary={
               <Typography variant="body2" color="textPrimary">
-                {location}
+                {createdAt &&
+                  `Joined ${moment(createdAt.toDate()).format('ll')}`}
               </Typography>
             }
           />
+          <Typography variant="h5" color="textSecondary">
+            A
+          </Typography>
         </ListItem>
         {profileOpen && (
           <UserProfileModal
@@ -77,9 +85,7 @@ class MemberRow extends Component {
             open={profileOpen}
             avatarUrl={avatarUrl}
             name={name}
-            bio={bio}
-            location={location}
-            contact={contact}
+            about={about}
           />
         )}
       </>
@@ -88,14 +94,13 @@ class MemberRow extends Component {
 }
 
 MemberRow.propTypes = {
-  data: PropTypes.shape({
+  user: PropTypes.shape({
     avatar: PropTypes.bool,
-    bio: PropTypes.string,
-    location: PropTypes.string,
-    contact: PropTypes.string,
+    about: PropTypes.string,
     name: PropTypes.string.isRequired
   }),
-  uid: PropTypes.string.isRequired
+  role: PropTypes.string.isRequired,
+  createdAt: PropTypes.object.isRequired
 };
 
 export default withFirebase(MemberRow);

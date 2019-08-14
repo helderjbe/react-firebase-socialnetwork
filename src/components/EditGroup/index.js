@@ -69,7 +69,7 @@ class EditGroup extends Component {
     } = this.props;
 
     api
-      .refGroupPublicById(gid)
+      .refGroupById(gid)
       .get()
       .then(doc => {
         doc.exists && this.setState({ ...doc.data() });
@@ -77,7 +77,7 @@ class EditGroup extends Component {
       .then(() => {
         const { banner } = this.state;
         if (banner) {
-          return api.refGroupPublicBanner(gid).getDownloadURL();
+          return api.refGroupBanner(gid).getDownloadURL();
         }
       })
       .then(url => {
@@ -110,16 +110,16 @@ class EditGroup extends Component {
     if (!!imageSrc) {
       await api.doAuthStateReload(); // Refresh the token (updated from cloud functions) to be able to upload the image to storage
 
-      await api.refGroupPublicBanner(gid).putString(croppedImage, 'data_url');
+      await api.refGroupBanner(gid).putString(croppedImage, 'data_url');
     }
 
     api
-      .refGroupPublicById(gid)
+      .refGroupById(gid)
       .update({
         banner: banner || !!imageSrc,
         title,
         details,
-        limit: Number(limit),
+        limit: Number(limit) === 1 ? 2 : Number(limit),
         tags,
         questions
       })
@@ -211,6 +211,7 @@ class EditGroup extends Component {
       title,
       details,
       limit,
+      memberCount,
       tags,
       questions,
       zoom,
@@ -324,7 +325,7 @@ class EditGroup extends Component {
           onDelete={this.onTagDelete}
         />
         <TextField
-          type="number" //TODO: needs to be > 2
+          type="number"
           variant="outlined"
           margin="normal"
           fullWidth

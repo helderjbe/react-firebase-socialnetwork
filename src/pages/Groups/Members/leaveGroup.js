@@ -32,7 +32,7 @@ class LeaveGroup extends Component {
       .then(tokenResult => (token = tokenResult))
       .then(() => {
         const role = `${token.claims.groups[gid]}s`;
-        api.refGroupPrivateById(gid).update({
+        api.refGroupMemberById(gid).update({
           [role]: api.firebase.firestore.FieldValue.arrayRemove(authstate.uid)
         });
       })

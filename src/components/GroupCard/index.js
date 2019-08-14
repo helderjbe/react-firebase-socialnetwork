@@ -49,7 +49,7 @@ class GroupCard extends Component {
 
     if (banner) {
       api
-        .refGroupPublicBanner(gid)
+        .refGroupBanner(gid)
         .getDownloadURL()
         .then(url => {
           this.setState({ groupImgSrc: url });
@@ -85,6 +85,7 @@ class GroupCard extends Component {
       authstate,
       api,
       updatedAt,
+      createdAt,
       questions
     } = this.props;
 
@@ -99,7 +100,11 @@ class GroupCard extends Component {
             />
             <GroupGridListTileBar
               title={title}
-              subtitle={`Updated ${moment(updatedAt.toDate()).fromNow()}`}
+              subtitle={
+                updatedAt
+                  ? `Updated ${moment(updatedAt.toDate()).fromNow()}`
+                  : `Created ${moment(createdAt.toDate()).fromNow()}`
+              }
               titlePosition="top"
               actionPosition="right"
             />
@@ -161,7 +166,7 @@ GroupCard.propTypes = {
   limit: PropTypes.number,
   memberCount: PropTypes.number.isRequired,
   tags: PropTypes.arrayOf(PropTypes.string),
-  updatedAt: PropTypes.object.isRequired
+  updatedAt: PropTypes.object
 };
 
 export default withRouter(withFirebase(withUserSession(GroupCard)));

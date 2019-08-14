@@ -18,101 +18,126 @@ const ALGOLIA_INDEX_NAME = functions.config().algolia.index_name;
 
 // TODO: When everyone leaves or group is inactive for x time, delete group
 
-/* GroupsPublic */
+/* Groups */
 
-exports.onWriteGroupPublic = functions.firestore
-  .document('groupsPublic/{gid}')
+exports.onWriteGroup = functions.firestore
+  .document('groups/{gid}')
   .onWrite((change, context) => {
-    const document = change.after.exists ? change.after.data() : null;
-    const objectID = context.params.gid;
+    const data = change.after.exists ? change.after.data() : null;
+    const previousData = change.before.exists ? change.before.data() : null;
+    let triggerType;
+    if (data && previousData) {
+      triggerType = 'update';
+    } else if (data) {
+      triggerType = 'create';
+    } else {
+      triggerType = 'delete';
+    }
 
-    const index = client.initIndex(ALGOLIA_INDEX_NAME);
+    const gid = context.params.gid;
 
-    if (document) {
-      document.objectID = objectID;
-      return index.saveObject(document).catch(error => {
-        console.error(error.message);
+    /* Algolia */
+    /*const index = client.initIndex(ALGOLIA_INDEX_NAME);
+
+    if (triggerType === 'update' || triggerType === 'create') {
+      data.objectID = gid;
+      index.saveObject(data).catch(error => {
+        throw new Error(error);
       });
     } else {
-      return index.deleteObject(objectID).catch(error => {
-        console.error(error.message);
+      index.deleteObject(gid).catch(error => {
+        throw new Error(error);
       });
+    }*/
+
+    /* On Group Create, add first admin to group */
+    if (triggerType === 'create') {
+      admin
+        .firestore()
+        .collection('groups')
+        .doc(gid)
+        .collection('members')
+        .doc(data.founder)
+        .set({
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          role: 'admin'
+        })
+        .catch(error => {
+          throw new Error(error);
+        });
     }
+
+    return true;
   });
 
-/* GroupsPublic */
+/* Group Members */
 
-exports.onCreateGroupPrivate = functions.firestore
-  .document('groupsPrivate/{gid}')
-  .onCreate((snap, context) => {
-    const data = snap.data();
-    const uid = data.admins[0];
+exports.onWriteGroupMembers = functions.firestore
+  .document('groups/{gid}/members/{uid}')
+  .onWrite((change, context) => {
+    const data = change.after.exists ? change.after.data() : null;
+    const previousData = change.before.exists ? change.before.data() : null;
+    let triggerType;
+    if (data && previousData) {
+      triggerType = 'update';
+    } else if (data) {
+      triggerType = 'create';
+    } else {
+      triggerType = 'delete';
+    }
+
     const gid = context.params.gid;
+    const uid = context.params.uid;
 
-    return admin
-      .auth()
-      .getUser(uid)
-      .then(user => {
-        const newClaims = { groups: { [gid]: 'admin' } };
-        let userClaims = user.customClaims;
-        if (!isObject(userClaims)) {
-          userClaims = {};
-        }
+    /* Custom Claims */
+    // only change custom claims if there is a change in the data role
+    if (!(triggerType === 'update' && data.role === previousData.role)) {
+      // eslint-disable-next-line promise/catch-or-return
+      admin
+        .auth()
+        .getUser(uid)
+        .then(user => {
+          let currentClaims = {};
+          let newClaims = {};
 
-        return admin
-          .auth()
-          .setCustomUserClaims(user.uid, merge.all([userClaims, newClaims]));
-      })
-      .catch(error => {
-        console.error(error);
-      });
-  });
+          if (isObject(user.customClaims)) {
+            currentClaims = { ...user.customClaims };
+          }
 
-exports.onUpdateGroupPrivate = functions.firestore
-  .document('groupsPrivate/{gid}')
-  .onUpdate((change, context) => {
-    const data = change.after.data();
-    const previousData = change.before.data();
-    const gid = context.params.gid;
+          switch (triggerType) {
+            case 'create':
+            case 'update':
+              newClaims = { groups: { [gid]: data.role } };
+              break;
+            case 'delete':
+              delete currentClaims.groups[gid];
+          }
 
-    const dataDiff = [
-      { type: 'admin', ...arrayElementDiff(previousData.admins, data.admins) },
-      {
-        type: 'member',
-        ...arrayElementDiff(previousData.members, data.members)
-      }
-    ];
+          return admin
+            .auth()
+            .setCustomUserClaims(
+              user.uid,
+              merge.all([currentClaims, newClaims])
+            );
+        });
+    }
 
-    dataDiff.forEach(
-      ({ type, deleted, element }) =>
-        element &&
-        admin
-          .auth()
-          .getUser(element)
-          .then(user => {
-            let userClaims = { ...user.customClaims };
-            if (deleted) {
-              delete userClaims.groups[gid];
-
-              return admin.auth().setCustomUserClaims(user.uid, userClaims);
-            } else {
-              const newClaims = { groups: { [gid]: type } };
-              if (!isObject(userClaims)) {
-                userClaims = {};
-              }
-
-              return admin
-                .auth()
-                .setCustomUserClaims(
-                  user.uid,
-                  merge.all([userClaims, newClaims])
-                );
-            }
-          })
-          .catch(error => {
-            console.error(error);
-          })
-    );
+    /* memberCount */
+    // Only update if creating or deleting
+    if (!data || !previousData) {
+      admin
+        .firestore()
+        .collection('groups')
+        .doc(gid)
+        .update({
+          memberCount: admin.firestore.FieldValue.increment(
+            triggerType === 'delete' ? -1 : 1
+          )
+        })
+        .catch(error => {
+          throw new Error(error);
+        });
+    }
 
     return true;
   });
@@ -133,40 +158,15 @@ exports.onDeleteApplication = functions.firestore
     }
 
     // add member to group in firestore
-    admin
+    return admin
       .firestore()
       .collection('groupsPrivate')
       .doc(gid)
       .update({
         members: admin.firestore.FieldValue.arrayUnion(uid)
-      });
-
-    // increment memberCount
-    admin
-      .firestore()
-      .collection('groupsPublic')
-      .doc(gid)
-      .update({
-        memberCount: admin.firestore.FieldValue.increment(1)
-      });
-
-    // add to uid token for group access
-    return admin
-      .auth()
-      .getUser(uid)
-      .then(user => {
-        const newClaims = { groups: { [gid]: 'member' } };
-        let userClaims = user.customClaims;
-        if (!isObject(userClaims)) {
-          userClaims = {};
-        }
-
-        return admin
-          .auth()
-          .setCustomUserClaims(user.uid, merge.all([userClaims, newClaims]));
       })
       .catch(error => {
-        console.error(error);
+        throw new Error(error);
       });
   });
 
@@ -175,16 +175,4 @@ exports.onDeleteApplication = functions.firestore
 function isObject(obj) {
   const type = typeof obj;
   return type === 'function' || (type === 'object' && Boolean(obj));
-}
-
-function arrayElementDiff(lhs, rhs) {
-  const deleted = lhs.length > rhs.length;
-  const changeLength = Math.max(lhs.length, rhs.length);
-
-  for (let i = 0; i < changeLength; i++) {
-    if (lhs[i] !== rhs[i]) {
-      return { deleted, element: deleted ? lhs[i] : rhs[i] };
-    }
-  }
-  return null;
 }

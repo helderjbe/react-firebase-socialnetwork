@@ -51,7 +51,6 @@ class SignIn extends Component {
           margin="normal"
           required
           fullWidth
-          id="email"
           label="Email Address"
           name="email"
           autoComplete="email"
@@ -67,7 +66,6 @@ class SignIn extends Component {
           name="password"
           label="Password"
           type="password"
-          id="password"
           value={password}
           onChange={this.onChange}
         />

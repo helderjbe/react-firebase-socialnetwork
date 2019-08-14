@@ -58,7 +58,6 @@ class UserEmail extends Component {
           margin="normal"
           fullWidth
           type="password"
-          id="currentPassword"
           label="Your Password"
           name="currentPassword"
           value={currentPassword}
@@ -69,7 +68,6 @@ class UserEmail extends Component {
           variant="outlined"
           margin="normal"
           fullWidth
-          id="email"
           label="New Email"
           name="email"
           value={email}
@@ -79,7 +77,6 @@ class UserEmail extends Component {
           variant="outlined"
           margin="normal"
           fullWidth
-          id="confirmEmail"
           label="Confirm Email"
           name="confirmEmail"
           value={confirmEmail}

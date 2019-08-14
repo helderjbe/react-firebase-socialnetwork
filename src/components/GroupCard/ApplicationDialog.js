@@ -33,7 +33,7 @@ class ApplicationDialog extends Component {
     const { questions } = this.state;
 
     api
-      .refApplicationsByUserId(gid, uid)
+      .refGroupApplicationById(gid, uid)
       .set({
         application: {
           ...questions

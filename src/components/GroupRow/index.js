@@ -4,47 +4,42 @@ import PropTypes from 'prop-types';
 import { Link, withRouter } from 'react-router-dom';
 import * as ROUTES from '../../constants/routes';
 
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import ListItemAvatar from '@material-ui/core/ListItemAvatar';
-import Avatar from '@material-ui/core/Avatar';
-import Typography from '@material-ui/core/Typography';
+import ButtonBase from '@material-ui/core/ButtonBase';
+import GridListTile from '@material-ui/core/GridListTile';
+import GridListTileBar from '@material-ui/core/GridListTileBar';
 
 import defaultBanner from '../../common/images/defaultBanner.jpg';
 
 const GroupRow = props => {
   return (
-    <ListItem
+    <ButtonBase
       component={Link}
-      style={{ textDecoration: 'none', color: 'inherit' }}
       to={ROUTES.GROUPS_ID.replace(':gid', props.gid)}
-      alignItems="flex-start"
+      style={{ display: 'block' }}
     >
-      <ListItemAvatar>
-        <Avatar alt="Banner" src={defaultBanner} />
-      </ListItemAvatar>
-      <ListItemText
-        primary={props.title}
-        secondary={
-          <Typography variant="body2" color="textPrimary">
-            Last message
-          </Typography>
-        }
-      />
-    </ListItem>
+      <GridListTile component="div">
+        <img
+          src={props.bannerUrl || defaultBanner}
+          alt={`${props.title} banner`}
+          style={{ width: '100%', height: 'auto' }}
+        />
+        <GridListTileBar
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
+          title={props.title}
+          subtitle={'Last Message'}
+          titlePosition="top"
+        />
+      </GridListTile>
+    </ButtonBase>
   );
 };
 
 GroupRow.propTypes = {
-  banner: PropTypes.bool,
-  details: PropTypes.string,
-  createdAt: PropTypes.object.isRequired,
-  updatedAt: PropTypes.object.isRequired,
   gid: PropTypes.string.isRequired,
   limit: PropTypes.number,
   memberCount: PropTypes.number.isRequired,
-  tags: PropTypes.arrayOf(PropTypes.string),
-  title: PropTypes.string.isRequired
+  title: PropTypes.string.isRequired,
+  bannerUrl: PropTypes.string
 };
 
 export default withRouter(GroupRow);

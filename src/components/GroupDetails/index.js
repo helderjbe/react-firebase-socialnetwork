@@ -3,12 +3,6 @@ import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom';
 import { withFirebase } from '../Firebase';
 
-import Cropper from 'react-easy-crop';
-import getCroppedImg, { readFile } from '../../aux/imageUtils';
-import ChipInput from 'material-ui-chip-input';
-
-import * as ROUTES from '../../constants/routes';
-
 import Chip from '@material-ui/core/Chip';
 import Typography from '@material-ui/core/Typography';
 import Avatar from '@material-ui/core/Avatar';
@@ -33,7 +27,7 @@ class GroupDetails extends Component {
     } = this.props;
 
     api
-      .refGroupPublicById(gid)
+      .refGroupById(gid)
       .get()
       .then(doc => {
         doc.exists && this.setState({ ...doc.data() });
@@ -41,7 +35,7 @@ class GroupDetails extends Component {
       .then(() => {
         const { banner } = this.state;
         if (banner) {
-          return api.refGroupPublicBanner(gid).getDownloadURL();
+          return api.refGroupBanner(gid).getDownloadURL();
         }
       })
       .then(url => {

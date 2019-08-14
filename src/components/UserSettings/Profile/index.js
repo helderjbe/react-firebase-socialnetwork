@@ -19,7 +19,7 @@ import Dialog from '@material-ui/core/Dialog';
 import Box from '@material-ui/core/Box';
 import Edit from '@material-ui/icons/Edit';
 
-import defaultAvatar from '../../../common/images/defaultAvatar.png';
+import defaultAvatar from '../../../common/images/defaultAvatar.jpg';
 import { withStyles } from '@material-ui/core';
 
 const EditAvatar = withStyles(theme => ({
@@ -44,9 +44,7 @@ class UserProfile extends Component {
   state = {
     avatar: false,
     name: '',
-    bio: '',
-    location: '',
-    contact: '',
+    about: '',
     imageSrc: null,
     crop: { x: 0, y: 0 },
     zoom: 1,
@@ -60,7 +58,7 @@ class UserProfile extends Component {
     const { api, authstate } = this.props;
 
     api
-      .refUserPublicById(authstate.uid)
+      .refUserById(authstate.uid)
       .get()
       .then(doc => {
         doc.exists && this.setState({ ...doc.data() });
@@ -68,7 +66,7 @@ class UserProfile extends Component {
       .then(() => {
         const { avatar } = this.state;
         if (avatar) {
-          return api.refUserPublicAvatar(authstate.uid).getDownloadURL();
+          return api.refUserAvatar(authstate.uid).getDownloadURL();
         }
       })
       .then(url => {
@@ -79,32 +77,22 @@ class UserProfile extends Component {
   onSubmit = async event => {
     event.preventDefault();
 
-    const {
-      name,
-      avatar,
-      bio,
-      contact,
-      location,
-      croppedImage,
-      imageSrc
-    } = this.state;
+    const { name, avatar, about, croppedImage, imageSrc } = this.state;
     const { api, authstate, history } = this.props;
 
     if (!!imageSrc) {
       await api
-        .refUserPublicAvatar(authstate.uid)
+        .refUserAvatar(authstate.uid)
         .putString(croppedImage, 'data_url');
     }
 
     api
-      .refUserPublicById(authstate.uid)
+      .refUserById(authstate.uid)
       .set(
         {
           avatar: avatar || !!imageSrc,
           name,
-          bio,
-          location,
-          contact
+          about
         },
         { merge: true }
       )
@@ -164,9 +152,7 @@ class UserProfile extends Component {
   render() {
     const {
       name,
-      bio,
-      location,
-      contact,
+      about,
       imageSrc,
       croppedImage,
       imageCropDialog,
@@ -265,46 +251,18 @@ class UserProfile extends Component {
         <TextField
           variant="outlined"
           margin="normal"
-          fullWidth
-          id="location"
-          label="Location"
-          name="location"
-          autoComplete="location"
-          value={location}
-          onChange={this.onChange}
-          placeholder="London, UK"
-        />
-        <Box mt={3} mb={2}>
-          <Divider variant="middle" />
-        </Box>
-        <TextField
-          variant="outlined"
-          margin="normal"
           multiline
           rows="4"
+          rowsMax="14"
           fullWidth
-          id="bio"
-          label="Bio"
-          name="bio"
-          value={bio}
+          id="about"
+          label="About Me"
+          name="about"
+          value={about}
           placeholder={
-            "Fiction enthusiast. There isn't a fiction book I don't know.\n\nMy hobbies include traveling, reading, hiking."
+            'From London.\n\nMy hobbies include traveling, reading, hiking.\n\nFacebook: johnsmith, Instagram: @johnsmith'
           }
           onChange={this.onChange}
-        />
-        <TextField
-          variant="outlined"
-          margin="normal"
-          multiline
-          rows="4"
-          fullWidth
-          id="contact"
-          label="Contact"
-          name="contact"
-          value={contact}
-          onChange={this.onChange}
-          placeholder={'Facebook: ...\nTwitter: ...'}
-          helperText="Share your social media accounts, e-mails, etc"
         />
         <Button
           type="submit"

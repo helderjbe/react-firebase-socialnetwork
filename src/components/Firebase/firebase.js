@@ -24,45 +24,33 @@ export default class Firebase {
     this.storage = firebase.storage();
   }
 
-  // TODO: Make it able to cancel all operations in componentwillunmount (to prevent memory leaks)
-
   // *** Firestore References ***
 
-  // Groups Public
-  refGroupsPublic = () => this.firestore.collection('groupsPublic');
+  // Groups
+  refGroups = () => this.firestore.collection('groups');
 
-  refGroupPublicById = gid => this.refGroupsPublic().doc(gid);
+  refGroupById = gid => this.refGroups().doc(gid);
 
-  refGroupPublicGenId = () => this.refGroupsPublic().doc().id;
+  // Group Members
+  //TODO: UPDATE ALL FILES WITH CHANGES -> IMPLEMENT FUNCTIONS WITH CUSTOM CLAIMS
+  refGroupMembers = gid => this.refGroupById(gid).collection('members');
 
-  // Groups Private
-  refGroupsPrivate = () => this.firestore.collection('groupsPrivate');
-
-  refGroupPrivateById = gid => this.refGroupsPrivate().doc(gid);
+  refGroupMemberById = (gid, uid) => this.refGroupMembers(gid).doc(uid);
 
   // Group Messages
-  refGroupMessages = () => this.firestore.collection('groupMessages');
+  refGroupMessages = gid => this.refGroupById(gid).collection('messages');
 
-  refGroupMessagesByGroupId = gid =>
-    this.refGroupMessages()
-      .doc(gid)
-      .collection('messages');
+  // Group Applications
+  refGroupApplications = gid =>
+    this.refGroupById(gid).collection('applications');
 
-  // Users Public
-  refUsersPublic = () => this.firestore.collection('usersPublic'); // TODO: make sure user fills their name and validates email
+  refGroupApplicationById = (gid, uid) =>
+    this.refGroupApplications(gid).doc(uid);
 
-  refUserPublicById = uid => this.refUsersPublic().doc(uid);
+  // Users
+  refUsers = () => this.firestore.collection('users');
 
-  // Applications
-  refApplications = () => this.firestore.collection('applications');
-
-  refApplicationsByGroupId = gid =>
-    this.refApplications()
-      .doc(gid)
-      .collection('from');
-
-  refApplicationsByUserId = (gid, uid) =>
-    this.refApplicationsByGroupId(gid).doc(uid);
+  refUserById = uid => this.refUsers().doc(uid);
 
   // *** Auth API ***
 
@@ -84,9 +72,9 @@ export default class Firebase {
 
   // *** Storage API ***
 
-  refGroupPublicBanner = gid =>
+  refGroupBanner = gid =>
     this.storage.ref(`groups/${gid}/public/images/banner.jpeg`);
 
-  refUserPublicAvatar = uid =>
+  refUserAvatar = uid =>
     this.storage.ref(`users/${uid}/public/images/avatar.jpeg`);
 }

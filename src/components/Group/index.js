@@ -4,6 +4,8 @@ import { Link, withRouter } from 'react-router-dom';
 import * as ROUTES from '../../constants/routes';
 import { withFirebase } from '../Firebase';
 
+import InfiniteScroll from 'react-infinite-scroller';
+
 import { withStyles } from '@material-ui/core';
 import Paper from '@material-ui/core/Paper';
 import InputBase from '@material-ui/core/InputBase';
@@ -13,6 +15,7 @@ import Box from '@material-ui/core/Box';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import Avatar from '@material-ui/core/Avatar';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import Image from '@material-ui/icons/Image';
 import Send from '@material-ui/icons/Send';
@@ -20,13 +23,11 @@ import Person from '@material-ui/icons/Person';
 import Description from '@material-ui/icons/Description';
 import Settings from '@material-ui/icons/Settings';
 import FolderShared from '@material-ui/icons/FolderShared';
-import Close from '@material-ui/icons/Close';
 import { styled, useTheme } from '@material-ui/core/styles';
 
 import UserProfileModal from '../UserProfileModal';
-import LeaveDialog from './leaveGroup';
 
-import defaultAvatar from '../../common/images/defaultAvatar.png';
+import defaultAvatar from '../../common/images/defaultAvatar.jpg';
 
 const InputContainer = withStyles(theme => ({
   root: {
@@ -111,10 +112,13 @@ class Group extends Component {
     users: {},
     avatars: {},
     profileIdOpen: null,
-    leaveDialogOpen: false
+    errorMsg: '',
+    hasMore: true
   };
 
   componentDidMount() {
+    const initialSnapshotLimit = 20;
+
     const {
       api,
       authstate,
@@ -124,30 +128,90 @@ class Group extends Component {
     } = this.props;
 
     this.listener = api
-      .refGroupMessagesByGroupId(gid)
+      .refGroupMessages(gid)
       .orderBy('createdAt', 'desc')
-      .limit(20)
-      .onSnapshot(snapshots =>
-        snapshots.docChanges().forEach(snapshot => {
-          !snapshots.metadata.hasPendingWrites &&
-            this.setState(state => {
-              const snapshotData = snapshot.doc.data();
-              if (
-                snapshotData.from !== authstate.uid &&
-                !(snapshotData.from in state.users)
-              ) {
-                this.handleNewUser(snapshotData.from);
-              }
+      .limit(initialSnapshotLimit)
+      .onSnapshot(
+        snapshots => {
+          snapshots.docChanges().forEach(snapshot => {
+            !snapshots.metadata.hasPendingWrites &&
+              this.setState(state => {
+                const snapshotData = snapshot.doc.data();
+                if (
+                  snapshotData.from !== authstate.uid &&
+                  !(snapshotData.from in state.users)
+                ) {
+                  this.handleNewUser(snapshotData.from);
+                }
 
-              const dataUpdate =
-                snapshot.type === 'added'
-                  ? [...state.data, snapshotData]
-                  : [snapshotData, ...state.data];
-              return { data: dataUpdate };
-            });
-        })
+                const dataUpdate =
+                  snapshot.type === 'added'
+                    ? [snapshotData, ...state.data]
+                    : [...state.data, snapshotData];
+                return { data: dataUpdate };
+              });
+          });
+          this.setState({
+            hasMore: Boolean(snapshots.docs.length >= initialSnapshotLimit)
+          });
+        },
+        error => {
+          this.setState({ errorMsg: error.message });
+        }
       );
   }
+
+  fetchOldMessages = () => {
+    const snapshotLimit = 20;
+
+    const orderBy = 'createdAt';
+
+    const {
+      api,
+      match: {
+        params: { gid }
+      },
+      authstate
+    } = this.props;
+    const { data, hasMore } = this.state;
+
+    if (!hasMore || this.isFetching) return false;
+    this.isFetching = true;
+
+    api
+      .refGroupMessages(gid)
+      .orderBy(orderBy, 'desc')
+      .startAfter(data[0][orderBy])
+      .limit(snapshotLimit)
+      .get()
+      .then(snapshots => {
+        snapshots.docChanges().forEach(snapshot => {
+          this.setState(state => {
+            const snapshotData = snapshot.doc.data();
+            if (
+              snapshotData.from !== authstate.uid &&
+              !(snapshotData.from in state.users)
+            ) {
+              this.handleNewUser(snapshotData.from);
+            }
+
+            return {
+              data: [snapshotData, ...state.data]
+            };
+          });
+        });
+
+        return snapshots.docs.length;
+      })
+      .then(snapshotLength => {
+        if (snapshotLength < snapshotLimit)
+          return this.setState({ hasMore: false });
+      })
+      .then(() => (this.isFetching = false))
+      .catch(error => {
+        this.setState({ errorMsg: error.message });
+      });
+  };
 
   componentWillUnmount() {
     this.listener();
@@ -169,7 +233,7 @@ class Group extends Component {
     }
 
     api
-      .refGroupMessagesByGroupId(gid)
+      .refGroupMessages(gid)
       .add({
         from: authstate.uid,
         createdAt: api.firebase.firestore.FieldValue.serverTimestamp(),
@@ -177,7 +241,7 @@ class Group extends Component {
         file
       })
       .then(_doc => this.setState({ text: '', file: false }))
-      .catch(console.error);
+      .catch(error => this.setState({ errorMsg: error.message }));
   };
 
   handleKeyDown = event => {
@@ -190,13 +254,13 @@ class Group extends Component {
     const { api } = this.props;
 
     api
-      .refUserPublicById(uid)
+      .refUserById(uid)
       .get()
       .then(doc => {
         const userData = doc.data();
         if (userData.avatar) {
           api
-            .refUserPublicAvatar(uid)
+            .refUserAvatar(uid)
             .getDownloadURL()
             .then(url => {
               this.setState(state => ({
@@ -222,10 +286,6 @@ class Group extends Component {
     this.setState({ profileIdOpen: null });
   };
 
-  handleLeaveDialog = () => {
-    this.setState(state => ({ leaveDialogOpen: !state.leaveDialogOpen }));
-  };
-
   onChange = event => {
     this.setState({ [event.target.name]: event.target.value });
   };
@@ -237,7 +297,8 @@ class Group extends Component {
       users,
       avatars,
       profileIdOpen,
-      leaveDialogOpen
+      errorMsg,
+      hasMore
     } = this.state;
     const {
       authstate,
@@ -263,9 +324,6 @@ class Group extends Component {
           >
             <Description />
           </IconButton>
-          <IconButton onClick={this.handleLeaveDialog}>
-            <Close />
-          </IconButton>
 
           <VertDivider />
 
@@ -275,34 +333,47 @@ class Group extends Component {
           >
             <FolderShared />
           </IconButton>
-          <IconButton
-            component={Link}
-            to={ROUTES.GROUPS_ID_EDIT.replace(':gid', gid)}
-          >
-            <Settings />
-          </IconButton>
         </TopBar>
 
         <MessageContainer>
-          {data.map((messageData, index) => {
-            const left = messageData.from !== authstate.uid;
-            const name = users[messageData.from]
-              ? users[messageData.from].name
-              : '';
-            return (
-              <Message
-                key={`message ${index}`}
-                uid={messageData.from}
-                left={left}
-                handleProfileIdOpen={this.handleProfileIdOpen}
-                name={name}
-                avatarUrl={avatars[messageData.from]}
-              >
-                {messageData.text}
-              </Message>
-            );
-          })}
+          <InfiniteScroll
+            style={{
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+            initialLoad={false}
+            isReverse={true}
+            loadMore={this.fetchOldMessages}
+            hasMore={hasMore}
+            useWindow={false}
+            loader={
+              <Box width="100%" textAlign="center" my={2} key={0}>
+                <CircularProgress />
+              </Box>
+            }
+          >
+            {data.map((messageData, index) => {
+              const left = messageData.from !== authstate.uid;
+              const name = users[messageData.from]
+                ? users[messageData.from].name
+                : '';
+              return (
+                <Message
+                  key={`message ${index}`}
+                  uid={messageData.from}
+                  left={left}
+                  handleProfileIdOpen={this.handleProfileIdOpen}
+                  name={name}
+                  avatarUrl={avatars[messageData.from]}
+                >
+                  {messageData.text}
+                </Message>
+              );
+            })}
+          </InfiniteScroll>
         </MessageContainer>
+
+        {errorMsg !== '' && errorMsg}
 
         <form onSubmit={this.onSubmit}>
           <InputContainer>
@@ -327,18 +398,9 @@ class Group extends Component {
             open={Boolean(profileIdOpen)}
             avatarUrl={avatars[profileIdOpen]}
             name={users[profileIdOpen].name}
-            bio={users[profileIdOpen].bio}
-            location={users[profileIdOpen].location}
-            contact={users[profileIdOpen].contact}
+            bio={users[profileIdOpen].about}
           />
         )}
-        <LeaveDialog
-          handleClose={this.handleLeaveDialog}
-          open={leaveDialogOpen}
-          authstate={authstate}
-          api={api}
-          gid={gid}
-        />
       </>
     );
   }

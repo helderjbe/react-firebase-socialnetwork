@@ -18,6 +18,10 @@
 
 # TODO
 
+Use react-redux-firebase + redux-firestore?
+
 1 - Custom Password Reset landing page
 2 - 404 page
 3 - Add clearData (for users), when users delete an account.
+4 - Make the side menu for desktop
+5 - If user doesn't fill in the name, call it anonymous or something

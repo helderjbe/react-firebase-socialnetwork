@@ -4,13 +4,7 @@ const db = {
       name: 'John Smith',
       avatar: true,
       createdAt: '2019-03-15T10:59:52.798Z',
-      bio: 'Hello, my name is user, nice to meet you',
-      interests: 'Software, Web Development, Freelancing',
-      location: 'London, UK',
-      facebook: 'johnsmith',
-      instagram: '@loler',
-      twitter: '@mega',
-      linkedin: ''
+      about: 'asdihnasidasdaisjdoiajsdoijasiodj'
     }
   ],
   usersPrivate: [
