@@ -10,7 +10,7 @@ const withAuthState = Component => {
     componentDidMount() {
       const { api } = this.props;
 
-      this.listener = api.auth.onAuthStateChanged(authUser => {
+      this.cancelListener = api.auth.onAuthStateChanged(authUser => {
         authUser
           ? this.setState({ authUser })
           : this.setState({ authUser: null });
@@ -18,7 +18,7 @@ const withAuthState = Component => {
     }
 
     componentWillUnmount() {
-      this.listener();
+      this.cancelListener();
     }
 
     render() {

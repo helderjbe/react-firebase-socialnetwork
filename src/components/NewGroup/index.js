@@ -10,12 +10,14 @@ import * as ROUTES from '../../constants/routes';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
+import LinearProgress from '@material-ui/core/LinearProgress';
 
 class NewGroup extends Component {
   state = {
     title: '',
     limit: 0,
     tags: [],
+    loading: false,
 
     error: null
   };
@@ -25,6 +27,10 @@ class NewGroup extends Component {
 
     const { title, limit, tags } = this.state;
     const { api, authstate, history } = this.props;
+
+    this.setState({ loading: true });
+
+    console.log('loading...');
 
     api
       .refGroups()
@@ -36,10 +42,23 @@ class NewGroup extends Component {
         createdAt: api.firebase.firestore.FieldValue.serverTimestamp()
       })
       .then(doc => {
-        history.push(ROUTES.GROUPS_ID_EDIT.replace(':gid', doc.id));
+        this.cancelListener = api.refGroupById(doc.id).onSnapshot(
+          async snapshot => {
+            if (snapshot.data().memberCount) {
+              await api.doAuthStateReload();
+              this.cancelListener();
+              return history.push(
+                ROUTES.GROUPS_ID_EDIT.replace(':gid', doc.id)
+              );
+            }
+          },
+          error => {
+            this.setState({ error, loading: false });
+          }
+        );
       })
       .catch(error => {
-        this.setState({ error });
+        this.setState({ error, loading: false });
       });
   };
 
@@ -67,9 +86,9 @@ class NewGroup extends Component {
   };
 
   render() {
-    const { title, limit, tags, error } = this.state;
+    const { title, limit, tags, error, loading } = this.state;
 
-    const isInvalid = title.length < 6;
+    const isInvalid = title.length < 6 || loading;
 
     return (
       <form autoComplete="off" onSubmit={this.onSubmit}>
@@ -82,7 +101,7 @@ class NewGroup extends Component {
           placeholder="Freelance accountability group ..."
           required
           value={title}
-          inputProps={{ maxLength: '56' }}
+          inputProps={{ maxLength: '54' }}
           onChange={this.onChange}
         />
         <ChipInput
@@ -119,9 +138,12 @@ class NewGroup extends Component {
         >
           Create
         </Button>
-        <Typography color="error" variant="body2">
-          {error && error.message}
-        </Typography>
+        {loading && <LinearProgress />}
+        {error && (
+          <Typography color="error" variant="body2">
+            {error.message}
+          </Typography>
+        )}
       </form>
     );
   }

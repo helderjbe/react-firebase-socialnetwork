@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 
+import makeCancelable from 'makecancelable';
+
 import { withRouter } from 'react-router-dom';
 import { withFirebase } from '../../Firebase';
 
@@ -29,7 +31,7 @@ const EditAvatar = withStyles(theme => ({
     right: '15%',
     width: 20,
     height: 20,
-    backgroundColor: theme.palette.primary.light
+    backgroundColor: theme.palette.primary.main
   }
 }))(Avatar);
 
@@ -57,21 +59,31 @@ class UserProfile extends Component {
   componentDidMount() {
     const { api, authstate } = this.props;
 
-    api
-      .refUserById(authstate.uid)
-      .get()
-      .then(doc => {
-        doc.exists && this.setState({ ...doc.data() });
-      })
-      .then(() => {
-        const { avatar } = this.state;
-        if (avatar) {
-          return api.refUserAvatar(authstate.uid).getDownloadURL();
+    this.cancelRequest = makeCancelable(
+      api.refUserById(authstate.uid).get(),
+      doc => {
+        const docData = doc.data();
+        doc.exists && this.setState({ ...docData });
+        if (doc.exists && docData.avatar) {
+          this.cancelRequest2 = makeCancelable(
+            api.refUserAvatar(authstate.uid).getDownloadURL(),
+            url => url && this.setState({ croppedImage: url }),
+            error => this.setState({ error })
+          );
         }
-      })
-      .then(url => {
-        url && this.setState({ croppedImage: url });
-      });
+      },
+      error => this.setState({ error })
+    );
+  }
+
+  componentWillUnmount() {
+    if (this.cancelRequest) {
+      this.cancelRequest();
+    }
+
+    if (this.cancelRequest2) {
+      this.cancelRequest2();
+    }
   }
 
   onSubmit = async event => {
@@ -160,7 +172,7 @@ class UserProfile extends Component {
       error
     } = this.state;
 
-    const isInvalid = name === '';
+    const isInvalid = name === '' && about === '' && !croppedImage;
 
     return (
       <form onSubmit={this.onSubmit}>
@@ -243,7 +255,6 @@ class UserProfile extends Component {
           label="Name"
           name="name"
           autoComplete="name"
-          required
           value={name}
           onChange={this.onChange}
           placeholder="John Smith"
@@ -252,8 +263,8 @@ class UserProfile extends Component {
           variant="outlined"
           margin="normal"
           multiline
-          rows="4"
-          rowsMax="14"
+          rows="5"
+          rowsMax="15"
           fullWidth
           id="about"
           label="About Me"

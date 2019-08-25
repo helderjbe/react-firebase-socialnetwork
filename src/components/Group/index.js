@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 
 import { Link, withRouter } from 'react-router-dom';
 import * as ROUTES from '../../constants/routes';
@@ -85,7 +86,7 @@ const Message = props => {
       {left ? (
         <Box mr={2} display="flex" alignItems="flex-end">
           <IconButton onClick={handleProfileIdOpen(uid)} style={{ padding: 0 }}>
-            <Avatar alt={name} src={avatarUrl || defaultAvatar} />
+            <Avatar alt={name || 'No Name'} src={avatarUrl || defaultAvatar} />
           </IconButton>
         </Box>
       ) : (
@@ -102,6 +103,14 @@ const Message = props => {
       </MessageCard>
     </Box>
   );
+};
+
+Message.propTypes = {
+  left: PropTypes.bool,
+  uid: PropTypes.string.isRequired,
+  handleProfileIdOpen: PropTypes.func.isRequired,
+  avatarUrl: PropTypes.string,
+  name: PropTypes.string
 };
 
 class Group extends Component {
@@ -304,8 +313,7 @@ class Group extends Component {
       authstate,
       match: {
         params: { gid }
-      },
-      api
+      }
     } = this.props;
 
     return (
@@ -405,6 +413,13 @@ class Group extends Component {
     );
   }
 }
-// input in bottom
+
+Group.propTypes = {
+  api: PropTypes.object.isRequired,
+  authstate: PropTypes.object,
+  match: PropTypes.shape({
+    params: PropTypes.object.isRequired
+  })
+};
 
 export default withRouter(withFirebase(Group));

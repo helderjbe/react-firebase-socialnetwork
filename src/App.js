@@ -8,27 +8,29 @@ import * as ROUTES from './constants/routes';
 
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 
-import { withStyles } from '@material-ui/styles';
 import Container from '@material-ui/core/Container';
 import Grid from '@material-ui/core/Grid';
+import Box from '@material-ui/core/Box';
+import { withStyles } from '@material-ui/styles';
 
-import HomePage from './pages/Home';
-import SignInPage from './pages/SignIn';
-import SignUpPage from './pages/SignUp';
-import PasswordForgetPage from './pages/PasswordForget';
-import UserSettingsPage from './pages/UserSettings';
-import NewGroupPage from './pages/Groups/New';
-import EditGroupPage from './pages/Groups/Edit';
-import MembersGroupPage from './pages/Groups/Members';
-import ApplicationsGroupPage from './pages/Groups/Applications';
-import GroupDetailsPage from './pages/Groups/Details';
-import GroupPage from './pages/Groups/Group';
-import GroupsPage from './pages/Groups';
+import HomePage from './routes/Home';
+import SignInPage from './routes/SignIn';
+import SignUpPage from './routes/SignUp';
+import PasswordForgetPage from './routes/PasswordForget';
+import UserSettingsPage from './routes/UserSettings';
+import NewGroupPage from './routes/Groups/New';
+import EditGroupPage from './routes/Groups/Edit';
+import MembersGroupPage from './routes/Groups/Members';
+import ApplicationsGroupPage from './routes/Groups/Applications';
+import GroupDetailsPage from './routes/Groups/Details';
+import GroupPage from './routes/Groups/Group';
+import GroupsPage from './routes/Groups';
+import EmailHandlerPage from './routes/EmailHandler';
+import NotFoundPage from './routes/NotFound';
 
 import NavBar from './components/NavBar';
 import SideBar from './components/SideBar';
 import BottomNav from './components/BottomNav';
-import { Box } from '@material-ui/core';
 
 const MainContainer = withStyles(theme => ({
   root: {
@@ -36,59 +38,51 @@ const MainContainer = withStyles(theme => ({
   }
 }))(Container);
 
-const App = props => {
-  const { authstate } = props;
+const routesList = [
+  { path: ROUTES.HOME, component: HomePage, exact: true },
+  { path: ROUTES.SIGN_IN, component: SignInPage },
+  { path: ROUTES.SIGN_UP, component: SignUpPage },
+  { path: ROUTES.PASSWORD_FORGET, component: PasswordForgetPage },
+  { path: ROUTES.SETTINGS, component: UserSettingsPage },
+  { path: ROUTES.GROUPS, component: GroupsPage, exact: true },
+  { path: ROUTES.GROUPS_NEW, component: NewGroupPage },
+  { path: ROUTES.GROUPS_ID, component: GroupPage, exact: true },
+  { path: ROUTES.GROUPS_ID_APPLICATIONS, component: ApplicationsGroupPage },
+  { path: ROUTES.GROUPS_ID_EDIT, component: EditGroupPage },
+  { path: ROUTES.GROUPS_ID_DETAILS, component: GroupDetailsPage },
+  { path: ROUTES.GROUPS_ID_MEMBERS, component: MembersGroupPage },
+  { path: ROUTES.EMAIL_HANDLER, component: EmailHandlerPage },
+  { component: NotFoundPage }
+];
 
-  return (
-    <Router>
-      <NavBar />
-      <MainContainer maxWidth="md">
-        <Grid container spacing={2}>
-          <Grid item sm={8} xs={12}>
-            <Switch>
-              <Route path={ROUTES.HOME} exact component={HomePage} />
-              <Route path={ROUTES.SIGN_IN} component={SignInPage} />
-              <Route path={ROUTES.SIGN_UP} component={SignUpPage} />
-              <Route
-                path={ROUTES.PASSWORD_FORGET}
-                component={PasswordForgetPage}
-              />
-              <Route path={ROUTES.SETTINGS} component={UserSettingsPage} />
-              <Route path={ROUTES.GROUPS} exact component={GroupsPage} />
-              <Route path={ROUTES.GROUPS_NEW} component={NewGroupPage} />
-              <Route path={ROUTES.GROUPS_ID} exact component={GroupPage} />
-              <Route
-                path={ROUTES.GROUPS_ID_APPLICATIONS}
-                component={ApplicationsGroupPage}
-              />
-              <Route path={ROUTES.GROUPS_ID_EDIT} component={EditGroupPage} />
-              <Route
-                path={ROUTES.GROUPS_ID_DETAILS}
-                component={GroupDetailsPage}
-              />
-              <Route
-                path={ROUTES.GROUPS_ID_MEMBERS}
-                component={MembersGroupPage}
-              />
-            </Switch>
-          </Grid>
-          <MediaQuerySmUp>
-            <Grid item sm={4}>
-              <SideBar />
-            </Grid>
-          </MediaQuerySmUp>
+const App = ({ authstate }) => (
+  <Router>
+    <NavBar />
+    <MainContainer maxWidth="md">
+      <Grid container spacing={2}>
+        <Grid item sm={8} xs={12}>
+          <Switch>
+            {routesList.map((props, index) => (
+              <Route {...props} key={`Route${index}`} />
+            ))}
+          </Switch>
         </Grid>
-      </MainContainer>
-      <MediaQueryXsDown>
-        {authstate && (
-          <Box mt={9}>
-            <BottomNav />
-          </Box>
-        )}
-      </MediaQueryXsDown>
-    </Router>
-  );
-};
+        <MediaQuerySmUp>
+          <Grid item sm={4}>
+            <SideBar />
+          </Grid>
+        </MediaQuerySmUp>
+      </Grid>
+    </MainContainer>
+    <MediaQueryXsDown>
+      {authstate && (
+        <Box mt={9}>
+          <BottomNav />
+        </Box>
+      )}
+    </MediaQueryXsDown>
+  </Router>
+);
 
 App.propTypes = {
   authstate: PropTypes.object

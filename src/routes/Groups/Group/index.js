@@ -4,7 +4,10 @@ import PropTypes from 'prop-types';
 import Card from '@material-ui/core/Card';
 import Group from '../../../components/Group';
 
-import { withProtectedRoute } from '../../../components/Session';
+import {
+  withProtectedRoute,
+  withEmailVerification
+} from '../../../components/Session';
 import { styled } from '@material-ui/styles';
 
 const FullScreenCard = styled(Card)(({ theme }) => ({
@@ -32,6 +35,6 @@ GroupPage.propTypes = {
   authstate: PropTypes.object.isRequired
 };
 
-const condition = authUser => !!authUser;
+const condition = authUser => Boolean(authUser);
 
-export default withProtectedRoute(condition)(GroupPage);
+export default withProtectedRoute(condition)(withEmailVerification(GroupPage));

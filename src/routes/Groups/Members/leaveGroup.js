@@ -12,7 +12,7 @@ import { withStyles } from '@material-ui/styles';
 
 const ErrorButton = withStyles(theme => ({
   root: {
-    color: theme.palette.text.primary,
+    color: 'white',
     backgroundColor: theme.palette.error.light,
     '&:hover': {
       backgroundColor: theme.palette.error.main
@@ -26,16 +26,9 @@ class LeaveGroup extends Component {
   handleLeave = () => {
     const { authstate, api, gid } = this.props;
 
-    let token;
     api
-      .doGetIdTokenResult()
-      .then(tokenResult => (token = tokenResult))
-      .then(() => {
-        const role = `${token.claims.groups[gid]}s`;
-        api.refGroupMemberById(gid).update({
-          [role]: api.firebase.firestore.FieldValue.arrayRemove(authstate.uid)
-        });
-      })
+      .refGroupMemberById(gid, authstate.uid)
+      .delete()
       .then(() => this.props.handleClose())
       .catch(error => this.setState({ error }));
   };

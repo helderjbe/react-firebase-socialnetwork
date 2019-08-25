@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import makeCancelable from 'makecancelable';
+
 import InfiniteScroll from 'react-infinite-scroller';
 
 import { Link } from 'react-router-dom';
@@ -11,7 +13,7 @@ import { withFirebase } from '../../components/Firebase';
 import Grid from '@material-ui/core/Grid';
 import Card from '@material-ui/core/Card';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import { Typography, Box } from '@material-ui/core';
+import Box from '@material-ui/core/Box';
 
 import CreateGroupLink from '../../components/CreateGroupLink';
 import GroupCard from '../../components/GroupCard';
@@ -21,6 +23,12 @@ class HomePage extends Component {
 
   componentDidMount() {
     this.fetchGroups();
+  }
+
+  componentWillUnmount() {
+    if (this.cancelRequest) {
+      this.cancelRequest();
+    }
   }
 
   fetchGroups = () => {
@@ -45,24 +53,22 @@ class HomePage extends Component {
           .orderBy(orderBy, 'desc')
           .limit(snapshotLimit);
 
-    query
-      .get()
-      .then(snapshots => {
+    this.cancelRequest = makeCancelable(
+      query.get(),
+      snapshots => {
         snapshots.docs.forEach(snapshot => {
           this.setState(state => ({
             data: [...state.data, { ...snapshot.data(), gid: snapshot.id }]
           }));
         });
-        return snapshots.docs.length;
-      })
-      .then(snapshotLength => {
-        if (snapshotLength < snapshotLimit)
+
+        if (snapshots.docs.length < snapshotLimit)
           return this.setState({ hasMore: false });
-      })
-      .then(() => (this.isFetching = false))
-      .catch(error => {
-        this.setState({ errorMsg: error.message });
-      });
+
+        this.isFetching = false;
+      },
+      error => this.setState({ errorMsg: error.message })
+    );
   };
 
   render() {
@@ -105,7 +111,6 @@ class HomePage extends Component {
 }
 
 HomePage.propTypes = {
-  // TODO: Complete all proptypes in all files
   api: PropTypes.object.isRequired
 };
 

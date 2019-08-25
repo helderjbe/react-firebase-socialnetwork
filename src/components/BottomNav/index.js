@@ -26,11 +26,9 @@ const NavAction = withStyles(theme => ({
 }))(BottomNavigationAction);
 
 class BottomNav extends Component {
-  constructor(props) {
-    super(props);
-
-    this.state = { menuValue: `/${props.location.pathname.split('/')[1]}` };
-  }
+  state = {
+    menuValue: `/${this.props.location.pathname.split('/')[1]}`
+  };
 
   handleChange = (_event, newValue) => {
     this.setState({ menuValue: newValue });

@@ -58,7 +58,11 @@ class ApplicationDialog extends Component {
   };
 
   render() {
-    const { applicationDialog, handleApplicationDialogClose } = this.props;
+    const {
+      applicationDialog,
+      handleApplicationDialogClose,
+      title
+    } = this.props;
     const { questions, error } = this.state;
 
     return (
@@ -69,7 +73,7 @@ class ApplicationDialog extends Component {
         scroll="body"
       >
         <form onSubmit={this.onSubmit}>
-          <DialogTitle id="application">Application</DialogTitle>
+          <DialogTitle id="application">Applying to "{title}"</DialogTitle>
           <DialogContent>
             <Typography color="primary" paragraph>
               {Object.keys(questions).every(key => key.length <= 0)

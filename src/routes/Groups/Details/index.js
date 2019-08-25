@@ -7,7 +7,10 @@ import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import GroupDetails from '../../../components/GroupDetails';
 
-import { withProtectedRoute } from '../../../components/Session';
+import {
+  withProtectedRoute,
+  withEmailVerification
+} from '../../../components/Session';
 import { Box, IconButton } from '@material-ui/core';
 import { withRouter, Link } from 'react-router-dom';
 
@@ -54,6 +57,8 @@ GroupDetailsPage.propTypes = {
   authstate: PropTypes.object.isRequired
 };
 
-const condition = authUser => !!authUser;
+const condition = authUser => Boolean(authUser);
 
-export default withProtectedRoute(condition)(withRouter(GroupDetailsPage));
+export default withProtectedRoute(condition)(
+  withEmailVerification(withRouter(GroupDetailsPage))
+);

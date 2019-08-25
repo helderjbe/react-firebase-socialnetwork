@@ -28,6 +28,9 @@ class SignUp extends Component {
     api
       .doCreateUserWithEmailAndPassword(email, password)
       .then(_authUser => {
+        return api.doSendEmailVerification();
+      })
+      .then(() => {
         this.setState({ ...INITIAL_STATE });
         history.push(ROUTES.SETTINGS);
       })

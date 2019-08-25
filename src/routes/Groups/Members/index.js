@@ -1,12 +1,17 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import makeCancelable from 'makecancelable';
+
 import InfiniteScroll from 'react-infinite-scroller';
 
 import { withRouter, Link } from 'react-router-dom';
 import * as ROUTES from '../../../constants/routes';
 
-import { withProtectedRoute } from '../../../components/Session';
+import {
+  withProtectedRoute,
+  withEmailVerification
+} from '../../../components/Session';
 
 import Card from '@material-ui/core/Card';
 import Grid from '@material-ui/core/Grid';
@@ -40,6 +45,16 @@ class MembersGroupPage extends Component {
     this.fetchMembers();
   }
 
+  componentWillUnmount() {
+    if (this.cancelRequest) {
+      this.cancelRequest();
+    }
+
+    if (this.cancelRequest2) {
+      this.cancelRequest2();
+    }
+  }
+
   handleLeaveDialog = () => {
     this.setState(state => ({ leaveDialogOpen: !state.leaveDialogOpen }));
   };
@@ -71,30 +86,29 @@ class MembersGroupPage extends Component {
           .orderBy(orderBy, 'desc')
           .limit(snapshotLimit);
 
-    query
-      .get()
-      .then(snapshots => {
+    this.cancelRequest = makeCancelable(
+      query.get(),
+      snapshots => {
         snapshots.docs.forEach(snapshot => {
-          api
-            .refUserById(snapshot.id)
-            .get()
-            .then(userSnapshot => {
+          this.cancelRequest2 = makeCancelable(
+            api.refUserById(snapshot.id).get(),
+            userSnapshot => {
               this.setState(state => ({
                 data: [...state.data, { ...snapshot.data(), uid: snapshot.id }],
                 userData: { [userSnapshot.id]: { ...userSnapshot.data() } }
               }));
-            });
+            },
+            error => this.setState({ errorMsg: error.message })
+          );
         });
-        return snapshots.docs.length;
-      })
-      .then(snapshotLength => {
-        if (snapshotLength < snapshotLimit)
+
+        if (snapshots.docs.length < snapshotLimit)
           return this.setState({ hasMore: false });
-      })
-      .then(() => (this.isFetching = false))
-      .catch(error => {
-        this.setState({ errorMsg: error.message });
-      });
+
+        this.isFetching = false;
+      },
+      error => this.setState({ errorMsg: error.message })
+    );
   };
 
   render() {
@@ -137,7 +151,6 @@ class MembersGroupPage extends Component {
           }
         >
           {data.map((entry, index) => {
-            console.log(entry);
             return (
               <Grid item xs={12} key={`memberrow ${index}`}>
                 <Card>
@@ -162,9 +175,16 @@ class MembersGroupPage extends Component {
 }
 
 MembersGroupPage.propTypes = {
-  api: PropTypes.object.isRequired
+  api: PropTypes.object.isRequired,
+  history: PropTypes.object.isRequired,
+  authstate: PropTypes.object,
+  match: PropTypes.shape({
+    params: PropTypes.object.isRequired
+  })
 };
 
-const condition = authUser => !!authUser;
+const condition = authUser => Boolean(authUser);
 
-export default withProtectedRoute(condition)(withRouter(MembersGroupPage));
+export default withProtectedRoute(condition)(
+  withEmailVerification(withRouter(MembersGroupPage))
+);

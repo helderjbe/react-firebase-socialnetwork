@@ -29,7 +29,7 @@ const UserProfileModal = props => {
         />
       </Box>
       <Box textAlign="center">
-        <DialogTitle id="name">{name}</DialogTitle>
+        <DialogTitle id="name">{name || 'No Name'}</DialogTitle>
       </Box>
       <DialogContent>
         <DialogContentText style={{ whiteSpace: 'pre-line' }}>
@@ -43,7 +43,7 @@ const UserProfileModal = props => {
 UserProfileModal.propTypes = {
   handleClose: PropTypes.func,
   avatarUrl: PropTypes.string,
-  name: PropTypes.string.isRequired,
+  name: PropTypes.string,
   about: PropTypes.string,
   open: PropTypes.bool,
   uid: PropTypes.string

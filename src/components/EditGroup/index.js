@@ -1,4 +1,7 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+
+import makeCancelable from 'makecancelable';
 
 import { withRouter } from 'react-router-dom';
 import { withFirebase } from '../Firebase';
@@ -68,22 +71,33 @@ class EditGroup extends Component {
       }
     } = this.props;
 
-    api
-      .refGroupById(gid)
-      .get()
-      .then(doc => {
-        doc.exists && this.setState({ ...doc.data() });
-      })
-      .then(() => {
-        const { banner } = this.state;
-        if (banner) {
-          return api.refGroupBanner(gid).getDownloadURL();
+    this.cancelRequest = makeCancelable(
+      api.refGroupById(gid).get(),
+      doc => {
+        const docData = doc.data();
+        doc.exists && this.setState({ ...docData });
+        if (docData.banner) {
+          this.cancelRequest2 = makeCancelable(
+            api.refGroupBanner(gid).getDownloadURL(),
+            url => {
+              url && this.setState({ croppedImage: url });
+            },
+            error => this.setState({ error })
+          );
         }
-      })
-      .then(url => {
-        url && this.setState({ croppedImage: url });
-      })
-      .catch(error => this.setState({ error }));
+      },
+      error => this.setState({ error })
+    );
+  }
+
+  componentWillUnmount() {
+    if (this.cancelRequest) {
+      this.cancelRequest();
+    }
+
+    if (this.cancelRequest2) {
+      this.cancelRequest2();
+    }
   }
 
   onSubmit = async event => {
@@ -108,9 +122,17 @@ class EditGroup extends Component {
     } = this.props;
 
     if (!!imageSrc) {
-      await api.doAuthStateReload(); // Refresh the token (updated from cloud functions) to be able to upload the image to storage
-
-      await api.refGroupBanner(gid).putString(croppedImage, 'data_url');
+      await api
+        .refGroupBanner(gid)
+        .putString(croppedImage, 'data_url')
+        .catch(error => {
+          this.setState({
+            error: {
+              message:
+                'No sufficient permissions to update the banner. If recent changes have happened to the group, please allow a few more seconds before updating again.'
+            }
+          });
+        });
     }
 
     api
@@ -309,7 +331,7 @@ class EditGroup extends Component {
           placeholder="Freelance accountability group ..."
           required
           value={title}
-          inputProps={{ maxLength: '56' }}
+          inputProps={{ maxLength: '54' }}
           onChange={this.onChange}
         />
         <ChipInput
@@ -408,5 +430,13 @@ class EditGroup extends Component {
     );
   }
 }
+
+EditGroup.propTypes = {
+  api: PropTypes.object.isRequired,
+  history: PropTypes.object.isRequired,
+  match: PropTypes.shape({
+    params: PropTypes.object.isRequired
+  })
+};
 
 export default withRouter(withFirebase(EditGroup));

@@ -10,7 +10,7 @@ const withProtectedRoute = condition => Component => {
     componentDidMount() {
       const { api, history } = this.props;
 
-      this.listener = api.auth.onAuthStateChanged(authUser => {
+      this.cancelListener = api.auth.onAuthStateChanged(authUser => {
         if (!condition(authUser)) {
           history.push(ROUTES.SIGN_IN);
         }
@@ -18,7 +18,7 @@ const withProtectedRoute = condition => Component => {
     }
 
     componentWillUnmount() {
-      this.listener();
+      this.cancelListener();
     }
 
     render() {

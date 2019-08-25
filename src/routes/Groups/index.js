@@ -1,9 +1,14 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import makeCancelable from 'makecancelable';
+
 import InfiniteScroll from 'react-infinite-scroller';
 
-import { withProtectedRoute } from '../../components/Session';
+import {
+  withProtectedRoute,
+  withEmailVerification
+} from '../../components/Session';
 
 import Card from '@material-ui/core/Card';
 import Grid from '@material-ui/core/Grid';
@@ -19,13 +24,32 @@ class GroupsPage extends Component {
   componentDidMount() {
     const { api } = this.props;
 
-    api.doGetIdTokenResult().then(token => {
-      if (!('groups' in token.claims)) {
-        return this.setState({ hasMore: false });
-      }
-      this.groupIds = Object.keys(token.claims.groups);
-      this.fetchGroups();
-    });
+    this.groupIds = null;
+    this.cancelRequest2 = {};
+
+    this.cancelRequest = makeCancelable(
+      api.doGetIdTokenResult(),
+      token => {
+        if (!('groups' in token.claims)) {
+          return this.setState({ hasMore: false });
+        }
+        this.groupIds = Object.keys(token.claims.groups);
+        this.fetchGroups();
+      },
+      error => this.setState({ error })
+    );
+  }
+
+  componentWillUnmount() {
+    if (this.cancelRequest) {
+      this.cancelRequest();
+    }
+
+    if (this.cancelRequest2) {
+      Object.values(this.cancelRequest2).forEach(cancelRequest =>
+        cancelRequest()
+      );
+    }
   }
 
   fetchGroups = () => {
@@ -41,26 +65,18 @@ class GroupsPage extends Component {
     data.length + slice.length >= this.groupIds.length &&
       this.setState({ hasMore: false });
 
-    slice.forEach(gid => {
-      api
-        .refGroupById(gid)
-        .get()
-        .then(async doc => {
-          const groupData = doc.data();
-          const groupBannerUrl = groupData.banner
-            ? await api.refGroupBanner(gid).getDownloadURL()
-            : null;
-
+    slice.forEach((gid, index) => {
+      this.cancelRequest2[index] = makeCancelable(
+        api.refGroupById(gid).get(),
+        doc => {
           this.setState(state => ({
-            data: [
-              ...state.data,
-              { ...doc.data(), gid: doc.id, bannerUrl: groupBannerUrl }
-            ]
+            data: [...state.data, { ...doc.data(), gid: doc.id }]
           }));
-        })
-        .catch(error => {
-          this.setState({ errorMsg: error.message });
-        });
+          delete this.cancelRequest2[index];
+          if (!this.loaded) this.loaded = true;
+        },
+        error => this.setState({ error })
+      );
     });
   };
 
@@ -81,7 +97,7 @@ class GroupsPage extends Component {
           </Box>
         }
       >
-        {data.length === 0 && errorMsg !== '' && (
+        {data.length === 0 && errorMsg === '' && (this.loaded || !hasMore) && (
           <Grid item xs={12}>
             <Card>
               <CardContent>No groups under your belt yet</CardContent>
@@ -104,6 +120,6 @@ GroupsPage.propTypes = {
   api: PropTypes.object.isRequired
 };
 
-const condition = authUser => !!authUser;
+const condition = authUser => Boolean(authUser);
 
-export default withProtectedRoute(condition)(GroupsPage);
+export default withProtectedRoute(condition)(withEmailVerification(GroupsPage));

@@ -15,6 +15,7 @@ import UserPassword from '../../components/UserSettings/Password';
 
 class UserSettingsPage extends Component {
   state = { editEmailPassword: false };
+
   componentDidMount() {
     const { api } = this.props;
 
@@ -52,9 +53,10 @@ class UserSettingsPage extends Component {
 }
 
 UserSettingsPage.propTypes = {
-  authstate: PropTypes.object.isRequired
+  api: PropTypes.object.isRequired,
+  authstate: PropTypes.object
 };
 
-const condition = authUser => !!authUser;
+const condition = authUser => Boolean(authUser);
 
 export default withProtectedRoute(condition)(withFirebase(UserSettingsPage));

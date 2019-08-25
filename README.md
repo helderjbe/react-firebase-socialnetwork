@@ -9,6 +9,8 @@
 2.3 - Data validation
 3 - Firebase Auth
 3.1 - Set up Facebook Auth
+3.2 - Set up custom domain for Email templates
+3.3 - Test Reset Password, Verify Email, Change Email
 4 - Firebase Quotas
 4.1 - Set up quotas for firestore
 4.2 - Configure Billing Account to remove quota restrictions
@@ -21,7 +23,8 @@
 Use react-redux-firebase + redux-firestore?
 
 1 - Custom Password Reset landing page
-2 - 404 page
+2 - Sidebar navigation
 3 - Add clearData (for users), when users delete an account.
 4 - Make the side menu for desktop
 5 - If user doesn't fill in the name, call it anonymous or something
+6 - Form validation

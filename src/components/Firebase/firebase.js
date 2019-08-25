@@ -70,6 +70,8 @@ export default class Firebase {
 
   doGetIdTokenResult = () => this.auth.currentUser.getIdTokenResult();
 
+  doSendEmailVerification = () => this.auth.currentUser.sendEmailVerification();
+
   // *** Storage API ***
 
   refGroupBanner = gid =>

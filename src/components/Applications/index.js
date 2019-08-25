@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 
 import moment from 'moment';
 
@@ -91,7 +92,7 @@ class Applications extends Component {
       .get()
       .then(doc => {
         const userData = doc.data();
-        if (userData.avatar) {
+        if (userData && userData.avatar) {
           api
             .refUserAvatar(uid)
             .getDownloadURL()
@@ -106,7 +107,7 @@ class Applications extends Component {
           }));
         }
         this.setState(state => ({
-          users: { ...state.users, [doc.id]: userData }
+          users: { ...state.users, [doc.id]: userData || {} }
         }));
       })
       .catch(error => {
@@ -129,7 +130,11 @@ class Applications extends Component {
         api.refGroupApplicationById(gid, uid).delete();
       })
       .then(() => {
-        this.setState(state => ({ data: [...state.data.splice(index)] }));
+        this.setState(state => {
+          const data = [...state.data];
+          data.splice(index, 1);
+          return { data };
+        });
       })
       .catch(error => {
         this.setState({ errorMsg: error.message });
@@ -148,7 +153,11 @@ class Applications extends Component {
       .refGroupApplicationById(gid, uid)
       .delete()
       .then(() => {
-        this.setState(state => ({ data: [...state.data.splice(index)] }));
+        this.setState(state => {
+          const data = [...state.data];
+          data.splice(index, 1);
+          return { data };
+        });
       })
       .catch(error => {
         this.setState({ errorMsg: error.message });
@@ -185,6 +194,13 @@ class Applications extends Component {
             </Box>
           }
         >
+          {data.length === 0 &&
+            errorMsg === '' &&
+            (this.isFetching || !hasMore) && (
+              <Box mt={2}>
+                <Typography>No applications received yet</Typography>
+              </Box>
+            )}
           {data.map((entry, index) => {
             if (!users[entry.uid]) {
               return (
@@ -210,7 +226,9 @@ class Applications extends Component {
                     </Box>
                     <div>
                       <Typography variant="subtitle1">
-                        {users[entry.uid].name}
+                        {users[entry.uid].name
+                          ? users[entry.uid].name
+                          : 'No Name'}
                       </Typography>
                       <Typography variant="caption">
                         {`${moment(entry.createdAt.toDate()).fromNow()}`}
@@ -224,10 +242,18 @@ class Applications extends Component {
                       ([question, answer], index) =>
                         question !== '' && (
                           <Box key={`questionAnswer ${index}`} mb={2}>
-                            <Typography variant="subtitle1">
+                            <Typography
+                              variant="subtitle1"
+                              style={{ whiteSpace: 'pre-line' }}
+                            >
                               {question}
                             </Typography>
-                            <Typography variant="body2">{answer}</Typography>
+                            <Typography
+                              variant="body2"
+                              style={{ whiteSpace: 'pre-line' }}
+                            >
+                              {answer}
+                            </Typography>
                           </Box>
                         )
                     )}
@@ -270,5 +296,12 @@ class Applications extends Component {
     );
   }
 }
+
+Applications.propTypes = {
+  api: PropTypes.object.isRequired,
+  match: PropTypes.shape({
+    params: PropTypes.object.isRequired
+  })
+};
 
 export default withRouter(withFirebase(Applications));

@@ -6,7 +6,10 @@ import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
 import NewGroup from '../../../components/NewGroup';
 
-import { withProtectedRoute } from '../../../components/Session';
+import {
+  withProtectedRoute,
+  withEmailVerification
+} from '../../../components/Session';
 
 const NewGroupPage = props => {
   const { authstate } = props;
@@ -32,9 +35,11 @@ const NewGroupPage = props => {
 };
 
 NewGroupPage.propTypes = {
-  authstate: PropTypes.object.isRequired
+  authstate: PropTypes.object
 };
 
-const condition = authUser => !!authUser;
+const condition = authUser => Boolean(authUser);
 
-export default withProtectedRoute(condition)(NewGroupPage);
+export default withProtectedRoute(condition)(
+  withEmailVerification(NewGroupPage)
+);

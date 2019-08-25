@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 
+import makeCancelable from 'makecancelable';
+
 import { withRouter } from 'react-router-dom';
 import { withFirebase } from '../Firebase';
 
@@ -26,22 +28,33 @@ class GroupDetails extends Component {
       }
     } = this.props;
 
-    api
-      .refGroupById(gid)
-      .get()
-      .then(doc => {
-        doc.exists && this.setState({ ...doc.data() });
-      })
-      .then(() => {
-        const { banner } = this.state;
-        if (banner) {
-          return api.refGroupBanner(gid).getDownloadURL();
+    this.cancelRequest = makeCancelable(
+      api.refGroupById(gid).get(),
+      doc => {
+        const docData = doc.data();
+        doc.exists && this.setState({ ...docData });
+        if (docData.banner) {
+          this.cancelRequest2 = makeCancelable(
+            api.refGroupBanner(gid).getDownloadURL(),
+            url => {
+              url && this.setState({ bannerSrc: url });
+            },
+            error => this.setState({ error })
+          );
         }
-      })
-      .then(url => {
-        url && this.setState({ bannerSrc: url });
-      })
-      .catch(error => this.setState({ error }));
+      },
+      error => this.setState({ error })
+    );
+  }
+
+  componentWillUnmount() {
+    if (this.cancelRequest) {
+      this.cancelRequest();
+    }
+
+    if (this.cancelRequest2) {
+      this.cancelRequest2();
+    }
   }
 
   render() {
@@ -75,9 +88,9 @@ class GroupDetails extends Component {
               </Avatar>
             }
             size="small"
-            label={`${memberCount} ${limit !== 0 ? `/ ${limit} ` : ''}${
-              limit !== 0 || memberCount !== 1 ? 'members' : 'member'
-            }`}
+            label={`${memberCount ? memberCount : 'X'} ${
+              limit !== 0 ? `/ ${limit || 'X'} ` : ''
+            }${limit !== 0 || memberCount !== 1 ? 'members' : 'member'}`}
             color="primary"
           />{' '}
           {tags &&

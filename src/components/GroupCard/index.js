@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import makeCancelable from 'makecancelable';
+
 import { withRouter } from 'react-router-dom';
 import * as ROUTES from '../../constants/routes';
 
@@ -23,7 +25,7 @@ import Grid from '@material-ui/core/Grid';
 import Box from '@material-ui/core/Box';
 
 import Group from '@material-ui/icons/Group';
-import AddBox from '@material-ui/icons/AddBox';
+import GroupAdd from '@material-ui/icons/GroupAdd';
 
 import ApplicationDialog from './ApplicationDialog';
 
@@ -48,15 +50,17 @@ class GroupCard extends Component {
     const { gid, api, banner } = this.props;
 
     if (banner) {
-      api
-        .refGroupBanner(gid)
-        .getDownloadURL()
-        .then(url => {
-          this.setState({ groupImgSrc: url });
-        })
-        .catch(error => {
-          console.error(error.message);
-        });
+      this.cancelRequest = makeCancelable(
+        api.refGroupBanner(gid).getDownloadURL(),
+        url => this.setState({ groupImgSrc: url }),
+        console.error
+      );
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.cancelRequest) {
+      this.cancelRequest();
     }
   }
 
@@ -64,12 +68,32 @@ class GroupCard extends Component {
     this.setState({ applicationDialog: false });
   };
 
-  handleApplicationDialogOpen = () => {
-    const { authstate, history } = this.props;
-    if (authstate) {
-      this.setState({ applicationDialog: true });
+  handleApplicationDialogOpen = async () => {
+    const { authstate, history, api, gid } = this.props;
+
+    if (!authstate) {
+      return history.push(ROUTES.SIGN_IN);
+    }
+
+    const token = await api.doGetIdTokenResult();
+
+    if (
+      !authstate.emailVerified &&
+      authstate.providerData
+        .map(provider => provider.providerId)
+        .includes('password')
+    ) {
+      // show snackbar with email confirmation needed
+      console.log('email snackbar');
+    } else if (
+      token.claims &&
+      token.claims.groups &&
+      token.claims.groups[gid]
+    ) {
+      // Snackbar with already in group
+      console.log('already in group');
     } else {
-      history.push(ROUTES.SIGN_IN);
+      this.setState({ applicationDialog: true });
     }
   };
 
@@ -105,6 +129,11 @@ class GroupCard extends Component {
                   ? `Updated ${moment(updatedAt.toDate()).fromNow()}`
                   : `Created ${moment(createdAt.toDate()).fromNow()}`
               }
+              actionIcon={
+                <Box p={2}>
+                  <GroupAdd color="secondary" />
+                </Box>
+              }
               titlePosition="top"
               actionPosition="right"
             />
@@ -118,9 +147,9 @@ class GroupCard extends Component {
               </Avatar>
             }
             size="small"
-            label={`${memberCount} ${limit !== 0 ? `/ ${limit} ` : ''}${
-              limit !== 0 || memberCount !== 1 ? 'members' : 'member'
-            }`}
+            label={`${memberCount ? memberCount : 1} ${
+              limit !== 0 ? `/ ${limit} ` : ''
+            }${limit !== 0 || memberCount !== 1 ? 'members' : 'member'}`}
             color="primary"
           />{' '}
           {tags &&
@@ -147,6 +176,7 @@ class GroupCard extends Component {
             api={api}
             applicationDialog={applicationDialog}
             handleApplicationDialogClose={this.handleApplicationDialogClose}
+            title={title}
             questions={questions}
           />
         )}
@@ -156,6 +186,7 @@ class GroupCard extends Component {
 }
 
 GroupCard.propTypes = {
+  bannerUrl: PropTypes.string,
   questions: PropTypes.arrayOf(PropTypes.string),
   authstate: PropTypes.object,
   api: PropTypes.object.isRequired,
