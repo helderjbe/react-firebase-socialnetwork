@@ -1,12 +1,18 @@
 import React, { Component } from 'react';
 
 import { withFirebase } from '../../Firebase';
+import { withSnackbar } from '../../Snackbar';
 
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
-import { Typography } from '@material-ui/core';
+import { Typography, LinearProgress } from '@material-ui/core';
 
-const INITIAL_STATE = { email: '', confirmEmail: '', currentPassword: '' };
+const INITIAL_STATE = {
+  email: '',
+  confirmEmail: '',
+  currentPassword: '',
+  loading: false
+};
 
 class UserEmail extends Component {
   state = { ...INITIAL_STATE };
@@ -24,29 +30,35 @@ class UserEmail extends Component {
     this.setState({ [event.target.name]: event.target.value });
   };
 
-  onSubmit = event => {
+  onSubmit = async event => {
     event.preventDefault();
 
-    const { authstate } = this.props;
+    const { authstate, callSnackbar } = this.props;
     const { email, currentPassword } = this.state;
 
-    this.reAuth(currentPassword)
-      .then(() => authstate.updateEmail(email))
-      .then(() => {
-        this.setState({ ...INITIAL_STATE });
-      })
-      .catch(error => console.error(error.message));
+    await this.setState({ loading: true });
+
+    try {
+      await this.reAuth(currentPassword);
+      await authstate.updateEmail(email);
+      callSnackbar('Email updated successfully', 'success');
+      this.setState({ ...INITIAL_STATE });
+    } catch (error) {
+      this.setState({ loading: false });
+      callSnackbar(error.message, 'error');
+    }
   };
 
   render() {
-    const { email, confirmEmail, currentPassword } = this.state;
+    const { email, confirmEmail, currentPassword, loading } = this.state;
     const { authstate } = this.props;
 
     const isInvalid =
       email === '' ||
       email !== confirmEmail ||
       email === authstate.email ||
-      currentPassword.trim() === '';
+      currentPassword.trim() === '' ||
+      loading;
 
     return (
       <form onSubmit={this.onSubmit}>
@@ -92,9 +104,10 @@ class UserEmail extends Component {
         >
           Save
         </Button>
+        {loading && <LinearProgress />}
       </form>
     );
   }
 }
 
-export default withFirebase(UserEmail);
+export default withFirebase(withSnackbar(UserEmail));

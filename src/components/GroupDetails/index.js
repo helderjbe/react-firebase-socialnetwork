@@ -1,15 +1,17 @@
 import React, { Component } from 'react';
 
+import moment from 'moment';
+
 import makeCancelable from 'makecancelable';
 
 import { withRouter } from 'react-router-dom';
 import { withFirebase } from '../Firebase';
+import { withSnackbar } from '../Snackbar';
 
 import Chip from '@material-ui/core/Chip';
 import Typography from '@material-ui/core/Typography';
 import Avatar from '@material-ui/core/Avatar';
 import CardContent from '@material-ui/core/CardContent';
-import Divider from '@material-ui/core/Divider';
 import Box from '@material-ui/core/Box';
 import Group from '@material-ui/icons/Group';
 
@@ -17,15 +19,20 @@ import defaultBanner from '../../common/images/defaultBanner.jpg';
 
 class GroupDetails extends Component {
   state = {
-    error: null
+    title: 'Group title',
+    details: '',
+    memberCount: 0,
+    closed: false,
+    tags: [],
+    bannerSrc: defaultBanner
   };
-
   componentDidMount() {
     const {
       api,
       match: {
         params: { gid }
-      }
+      },
+      callSnackbar
     } = this.props;
 
     this.cancelRequest = makeCancelable(
@@ -38,12 +45,11 @@ class GroupDetails extends Component {
             api.refGroupBanner(gid).getDownloadURL(),
             url => {
               url && this.setState({ bannerSrc: url });
-            },
-            error => this.setState({ error })
+            }
           );
         }
       },
-      error => this.setState({ error })
+      error => callSnackbar(error.message, 'error')
     );
   }
 
@@ -62,10 +68,10 @@ class GroupDetails extends Component {
       title,
       details,
       memberCount,
-      limit,
+      closed,
       tags,
       bannerSrc,
-      error
+      createdAt
     } = this.state;
 
     return (
@@ -79,6 +85,9 @@ class GroupDetails extends Component {
           <Typography variant="h6" component="h1">
             {title}
           </Typography>
+          <Typography variant="caption">
+            Created {moment(createdAt).format('MMMM Do YYYY')}
+          </Typography>
         </Box>
         <Box mt={1} mx={2} lineHeight="1.8rem">
           <Chip
@@ -88,9 +97,7 @@ class GroupDetails extends Component {
               </Avatar>
             }
             size="small"
-            label={`${memberCount ? memberCount : 'X'} ${
-              limit !== 0 ? `/ ${limit || 'X'} ` : ''
-            }${limit !== 0 || memberCount !== 1 ? 'members' : 'member'}`}
+            label={`${memberCount} ${memberCount !== 1 ? 'members' : 'member'}`}
             color="primary"
           />{' '}
           {tags &&
@@ -101,6 +108,11 @@ class GroupDetails extends Component {
             ))}
         </Box>
         <CardContent>
+          {closed && (
+            <Typography color="textSecondary" paragraph variant="body1">
+              Closed to new applications
+            </Typography>
+          )}
           <Typography
             paragraph
             align="justify"
@@ -110,12 +122,9 @@ class GroupDetails extends Component {
             {details}
           </Typography>
         </CardContent>
-        <Typography color="error" variant="body2">
-          {error && error.message}
-        </Typography>
       </>
     );
   }
 }
 
-export default withRouter(withFirebase(GroupDetails));
+export default withRouter(withFirebase(withSnackbar(GroupDetails)));

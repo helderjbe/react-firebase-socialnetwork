@@ -1,4 +1,7 @@
 import React, { Component } from 'react';
+
+import { withSnackbar } from '../Snackbar';
+
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import Dialog from '@material-ui/core/Dialog';
@@ -6,6 +9,7 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Typography from '@material-ui/core/Typography';
+import LinearProgress from '@material-ui/core/LinearProgress';
 
 class ApplicationDialog extends Component {
   constructor(props) {
@@ -13,7 +17,7 @@ class ApplicationDialog extends Component {
 
     const { questions } = props;
 
-    this.INITIAL_STATE = { questions: {}, error: null };
+    this.INITIAL_STATE = { questions: {}, loading: false };
 
     if (questions) {
       for (let i = 0; i < Object.keys(questions).length; i++) {
@@ -26,28 +30,36 @@ class ApplicationDialog extends Component {
     this.state = { ...this.INITIAL_STATE };
   }
 
-  onSubmit = event => {
+  onSubmit = async event => {
     event.preventDefault();
 
-    const { api, gid, uid, handleApplicationDialogClose } = this.props;
+    const {
+      api,
+      gid,
+      uid,
+      handleApplicationDialogClose,
+      callSnackbar
+    } = this.props;
     const { questions } = this.state;
 
-    api
-      .refGroupApplicationById(gid, uid)
-      .set({
+    await this.setState({ loading: true });
+
+    try {
+      await api.refGroupApplicationById(gid, uid).set({
         application: {
           ...questions
         },
-        createdAt: api.firebase.firestore.FieldValue.serverTimestamp()
-      })
-      .then(() => {
-        this.setState({ ...this.INITIAL_STATE });
-      })
-      .catch(error => {
-        this.setState({ error });
+        createdAt: api.firebase.firestore.Timestamp.now().toMillis()
       });
 
-    handleApplicationDialogClose();
+      callSnackbar('Application sent', 'success');
+      this.setState({ ...this.INITIAL_STATE });
+
+      handleApplicationDialogClose();
+    } catch (error) {
+      this.setState({ loading: false });
+      callSnackbar(error.message, 'error');
+    }
   };
 
   onChange = event => {
@@ -63,7 +75,7 @@ class ApplicationDialog extends Component {
       handleApplicationDialogClose,
       title
     } = this.props;
-    const { questions, error } = this.state;
+    const { questions, loading } = this.state;
 
     return (
       <Dialog
@@ -101,24 +113,28 @@ class ApplicationDialog extends Component {
             )}
           </DialogContent>
           <DialogActions>
-            <Button type="submit" variant="contained" color="primary">
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
               Apply
             </Button>
             <Button
               onClick={handleApplicationDialogClose}
               variant="contained"
               color="primary"
+              disabled={loading}
             >
               Cancel
             </Button>
           </DialogActions>
-          <Typography color="error" variant="body2">
-            {error && error.message}
-          </Typography>
+          {loading && <LinearProgress />}
         </form>
       </Dialog>
     );
   }
 }
 
-export default ApplicationDialog;
+export default withSnackbar(ApplicationDialog);

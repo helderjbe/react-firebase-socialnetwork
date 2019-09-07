@@ -4,6 +4,7 @@ import makeCancelable from 'makecancelable';
 
 import { withRouter } from 'react-router-dom';
 import { withFirebase } from '../../Firebase';
+import { withSnackbar } from '../../Snackbar';
 
 import Cropper from 'react-easy-crop';
 import getCroppedImg, { readFile } from '../../../aux/imageUtils';
@@ -22,7 +23,7 @@ import Box from '@material-ui/core/Box';
 import Edit from '@material-ui/icons/Edit';
 
 import defaultAvatar from '../../../common/images/defaultAvatar.jpg';
-import { withStyles } from '@material-ui/core';
+import { withStyles, LinearProgress } from '@material-ui/core';
 
 const EditAvatar = withStyles(theme => ({
   root: {
@@ -53,11 +54,11 @@ class UserProfile extends Component {
     croppedImage: null,
     croppedAreaPixels: null,
     imageCropDialog: false,
-    error: null
+    loading: false
   };
 
   componentDidMount() {
-    const { api, authstate } = this.props;
+    const { api, authstate, callSnackbar } = this.props;
 
     this.cancelRequest = makeCancelable(
       api.refUserById(authstate.uid).get(),
@@ -67,12 +68,11 @@ class UserProfile extends Component {
         if (doc.exists && docData.avatar) {
           this.cancelRequest2 = makeCancelable(
             api.refUserAvatar(authstate.uid).getDownloadURL(),
-            url => url && this.setState({ croppedImage: url }),
-            error => this.setState({ error })
+            url => url && this.setState({ croppedImage: url })
           );
         }
       },
-      error => this.setState({ error })
+      error => callSnackbar(error.message, 'error')
     );
   }
 
@@ -90,39 +90,40 @@ class UserProfile extends Component {
     event.preventDefault();
 
     const { name, avatar, about, croppedImage, imageSrc } = this.state;
-    const { api, authstate, history } = this.props;
+    const { api, authstate, history, callSnackbar } = this.props;
 
-    if (!!imageSrc) {
-      await api
-        .refUserAvatar(authstate.uid)
-        .putString(croppedImage, 'data_url');
-    }
+    await this.setState({ loading: true });
 
-    api
-      .refUserById(authstate.uid)
-      .set(
+    try {
+      if (!!imageSrc) {
+        await api
+          .refUserAvatar(authstate.uid)
+          .putString(croppedImage, 'data_url');
+      }
+
+      await api.refUserById(authstate.uid).set(
         {
           avatar: avatar || !!imageSrc,
           name,
           about
         },
         { merge: true }
-      )
-      .then(() => {
-        history.push(ROUTES.HOME);
-      })
-      .catch(error => {
-        this.setState({ error });
-      });
+      );
+      callSnackbar('Profile updated successfully', 'success');
+      history.push(ROUTES.HOME);
+    } catch (error) {
+      this.setState({ loading: false });
+      callSnackbar(error.message, 'error');
+    }
   };
 
   onSelectImage = async e => {
     if (e.target.files && e.target.files.length > 0) {
       const imageDataUrl = await readFile(e.target.files[0]);
       this.setState({
-        imageSrc: imageDataUrl
+        imageSrc: imageDataUrl,
+        imageCropDialog: true
       });
-      this.setState({ imageCropDialog: true });
     }
   };
 
@@ -169,10 +170,10 @@ class UserProfile extends Component {
       croppedImage,
       imageCropDialog,
       zoom,
-      error
+      loading
     } = this.state;
 
-    const isInvalid = name === '' && about === '' && !croppedImage;
+    const isInvalid = (name === '' && about === '' && !croppedImage) || loading;
 
     return (
       <form onSubmit={this.onSubmit}>
@@ -285,12 +286,10 @@ class UserProfile extends Component {
         >
           Update
         </Button>
-        <Typography color="error" variant="body2">
-          {error && error.message}
-        </Typography>
+        {loading && <LinearProgress />}
       </form>
     );
   }
 }
 
-export default withRouter(withFirebase(UserProfile));
+export default withRouter(withFirebase(withSnackbar(UserProfile)));

@@ -10,6 +10,7 @@ admin.initializeApp();
 const firestore = admin.firestore();
 const auth = admin.auth();
 const storage = admin.storage();
+const Timestamp = admin.firestore.Timestamp;
 const FieldValue = admin.firestore.FieldValue;
 
 // Initialize Algolia, requires installing Algolia dependencies:
@@ -21,13 +22,16 @@ const client = algoliasearch(
   functions.config().algolia.api_key
 );
 
-const ALGOLIA_INDEX_NAME = functions.config().algolia.index_name;
+const ENV_PREFIX = process.env.GCLOUD_PROJECT.includes('prod')
+  ? 'prod_'
+  : 'dev_';
 
+const ALGOLIA_INDEX_NAME = ENV_PREFIX + functions.config().algolia.index_name;
 // TODO: When everyone leaves or group is inactive for x time, delete group
 
 /* Groups */
 
-/*exports.onWriteGroup = functions.firestore
+exports.onWriteGroup = functions.firestore
   .document('groups/{gid}')
   .onWrite((change, context) => {
     const data = change.after.exists ? change.after.data() : null;
@@ -35,20 +39,45 @@ const ALGOLIA_INDEX_NAME = functions.config().algolia.index_name;
 
     const gid = context.params.gid;
 
-    // Algolia
-    const index = client.initIndex(ALGOLIA_INDEX_NAME);
-
-    if (triggerType === 'update' || triggerType === 'create') {
-      data.objectID = gid;
-      index.saveObject(data).catch(error => {
-        throw new Error(error);
-      });
+    let triggerType;
+    if (data && previousData) {
+      triggerType = 'update';
+    } else if (data) {
+      triggerType = 'create';
     } else {
-      index.deleteObject(gid).catch(error => {
-        throw new Error(error);
-      });
+      triggerType = 'delete';
     }
-  });*/
+
+    // Algolia
+
+    // Indexes
+    const index = client.initIndex(ALGOLIA_INDEX_NAME);
+    index.setSettings({
+      searchableAttributes: ['title', 'unordered(details)'],
+      attributesForFaceting: ['searchable(tags)', 'memberCount'],
+      customRanking: ['desc(updatedAt)', 'desc(createdAt)'],
+      removeStopWords: true
+    });
+
+    // Saving logic
+    if (
+      (triggerType === 'update' || triggerType === 'create') &&
+      !data.closed
+    ) {
+      // Cater data for saving
+      if ('founder' in data) {
+        delete data.founder;
+      }
+      if ('closed' in data) {
+        delete data.closed;
+      }
+      data.objectID = gid;
+
+      return index.saveObject(data);
+    } else {
+      return index.deleteObject(gid);
+    }
+  });
 
 exports.onCreateGroup = functions.firestore
   .document('groups/{gid}')
@@ -64,11 +93,8 @@ exports.onCreateGroup = functions.firestore
       .collection('members')
       .doc(data.founder)
       .set({
-        createdAt: FieldValue.serverTimestamp(),
+        createdAt: Timestamp.now().toMillis(),
         role: 'admin'
-      })
-      .catch(error => {
-        throw new Error(error);
       });
   });
 
@@ -76,7 +102,7 @@ exports.onCreateGroup = functions.firestore
 
 exports.onWriteGroupMember = functions.firestore
   .document('groups/{gid}/members/{uid}')
-  .onWrite((change, context) => {
+  .onWrite(async (change, context) => {
     const data = change.after.exists ? change.after.data() : null;
     const previousData = change.before.exists ? change.before.data() : null;
     let triggerType;
@@ -94,29 +120,31 @@ exports.onWriteGroupMember = functions.firestore
     /* Custom Claims */
     // only change custom claims if there is a change in the data role
     if (!(triggerType === 'update' && data.role === previousData.role)) {
-      // eslint-disable-next-line promise/catch-or-return
-      return auth.getUser(uid).then(user => {
-        let currentClaims = {};
-        let newClaims = {};
+      const user = await auth.getUser(uid);
 
-        if (isObject(user.customClaims)) {
-          currentClaims = { ...user.customClaims };
-        }
+      let currentClaims = {};
+      let newClaims = {};
 
-        switch (triggerType) {
-          case 'create':
-          case 'update':
-            newClaims = { groups: { [gid]: data.role } };
-            break;
-          case 'delete':
-            delete currentClaims.groups[gid];
-        }
+      if (isObject(user.customClaims)) {
+        currentClaims = { ...user.customClaims };
+      }
 
-        return auth.setCustomUserClaims(
-          user.uid,
-          merge.all([currentClaims, newClaims])
-        );
-      });
+      switch (triggerType) {
+        case 'create':
+        case 'update':
+          newClaims = { groups: { [gid]: data.role } };
+          break;
+        case 'delete':
+          delete currentClaims.groups[gid];
+      }
+
+      const updatedClaims = merge.all([currentClaims, newClaims]);
+
+      await auth.setCustomUserClaims(uid, updatedClaims);
+      await firestore
+        .collection('userClaims')
+        .doc(uid)
+        .set(updatedClaims.groups);
     }
 
     return true;
@@ -124,23 +152,19 @@ exports.onWriteGroupMember = functions.firestore
 
 exports.onDeleteGroupMember = functions.firestore
   .document('groups/{gid}/members/{uid}')
-  .onDelete((_snap, context) => {
+  .onDelete(async (_snap, context) => {
     const gid = context.params.gid;
 
-    return firestore
+    const doc = await firestore
       .collection('groups')
       .doc(gid)
-      .get()
-      .then(doc => {
-        if (doc.data().memberCount <= 1) {
-          return deleteGroup(gid);
-        } else {
-          return updateMemberCount(gid, -1);
-        }
-      })
-      .catch(error => {
-        throw new Error(error);
-      });
+      .get();
+
+    if (doc.data().memberCount <= 1) {
+      return deleteGroup(gid);
+    } else {
+      return updateMemberCount(gid, -1);
+    }
   });
 
 exports.onCreateGroupMember = functions.firestore
@@ -174,14 +198,11 @@ exports.onDeleteApplication = functions.firestore
       .doc(uid)
       .set(
         {
-          createdAt: FieldValue.serverTimestamp(),
+          createdAt: Timestamp.now().toMillis(),
           role: 'member'
         },
         { merge: true }
-      )
-      .catch(error => {
-        throw new Error(error);
-      });
+      );
   });
 
 /** Helper functions **/
@@ -194,32 +215,35 @@ function isObject(obj) {
 function deleteGroup(gid) {
   // Delete Storage Files
   storage
-    .bucket(JSON.parse(process.env.FIREBASE_CONFIG.storageBucket))
+    .bucket(JSON.parse(process.env.FIREBASE_CONFIG).storageBucket)
     .deleteFiles({
       force: true,
       prefix: `groups/${gid}/`
     });
 
   // Delete DB
-  firebase_tools.firestore
-    .delete(`groups/${gid}`, {
-      project: process.env.GCLOUD_PROJECT,
-      recursive: true,
-      yes: true
-    })
-    .catch(error => {
-      throw new Error(error);
-    });
+  return firebase_tools.firestore.delete(`groups/${gid}`, {
+    project: process.env.GCLOUD_PROJECT,
+    recursive: true,
+    yes: true
+  });
 }
 
 function updateMemberCount(gid, value) {
-  return firestore
-    .collection('groups')
-    .doc(gid)
-    .update({
-      memberCount: FieldValue.increment(value)
-    })
-    .catch(error => {
-      throw new Error(error);
-    });
+  if (value > 0) {
+    return firestore
+      .collection('groups')
+      .doc(gid)
+      .update({
+        updatedAt: Timestamp.now().toMillis(),
+        memberCount: FieldValue.increment(value)
+      });
+  } else {
+    return firestore
+      .collection('groups')
+      .doc(gid)
+      .update({
+        memberCount: FieldValue.increment(value)
+      });
+  }
 }

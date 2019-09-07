@@ -14,12 +14,12 @@
     "node": "8"
   },
   "dependencies": {
-    "algoliasearch": "^3.33.0",
+    "algoliasearch": "^3.34.0",
     "deepmerge": "^4.0.0",
     "eslint": "^5.16.0",
-    "firebase-admin": "^8.4.0",
+    "firebase-admin": "^8.5.0",
     "firebase-functions": "^3.2.0",
-    "firebase-tools": "^7.2.4"
+    "firebase-tools": "^7.3.1"
   },
   "devDependencies": {
     "eslint-plugin-promise": "^4.0.1",

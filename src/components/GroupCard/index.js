@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { Highlight } from 'react-instantsearch-dom';
+
 import makeCancelable from 'makecancelable';
 
 import { withRouter } from 'react-router-dom';
@@ -10,22 +12,19 @@ import moment from 'moment';
 
 import { withFirebase } from '../Firebase';
 import { withUserSession } from '../Session';
+import { withSnackbar } from '../Snackbar';
 
-import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
-import IconButton from '@material-ui/core/IconButton';
-import Button from '@material-ui/core/Button';
 import GridListTile from '@material-ui/core/GridListTile';
 import GridListTileBar from '@material-ui/core/GridListTileBar';
 import Chip from '@material-ui/core/Chip';
 import Avatar from '@material-ui/core/Avatar';
 import Typography from '@material-ui/core/Typography';
 import withStyles from '@material-ui/core/styles/withStyles';
-import Grid from '@material-ui/core/Grid';
 import Box from '@material-ui/core/Box';
 
 import Group from '@material-ui/icons/Group';
-import GroupAdd from '@material-ui/icons/GroupAdd';
+import PersonAdd from '@material-ui/icons/PersonAdd';
 
 import ApplicationDialog from './ApplicationDialog';
 
@@ -52,8 +51,7 @@ class GroupCard extends Component {
     if (banner) {
       this.cancelRequest = makeCancelable(
         api.refGroupBanner(gid).getDownloadURL(),
-        url => this.setState({ groupImgSrc: url }),
-        console.error
+        url => this.setState({ groupImgSrc: url })
       );
     }
   }
@@ -69,7 +67,7 @@ class GroupCard extends Component {
   };
 
   handleApplicationDialogOpen = async () => {
-    const { authstate, history, api, gid } = this.props;
+    const { authstate, history, api, gid, callSnackbar } = this.props;
 
     if (!authstate) {
       return history.push(ROUTES.SIGN_IN);
@@ -83,15 +81,16 @@ class GroupCard extends Component {
         .map(provider => provider.providerId)
         .includes('password')
     ) {
-      // show snackbar with email confirmation needed
-      console.log('email snackbar');
+      callSnackbar(
+        'Please validate your e-mail first before applying',
+        'error'
+      );
     } else if (
       token.claims &&
       token.claims.groups &&
       token.claims.groups[gid]
     ) {
-      // Snackbar with already in group
-      console.log('already in group');
+      callSnackbar("You're already a part of this group", 'error');
     } else {
       this.setState({ applicationDialog: true });
     }
@@ -101,8 +100,6 @@ class GroupCard extends Component {
     const { groupImgSrc, applicationDialog } = this.state;
     const {
       title,
-      details,
-      limit,
       memberCount,
       tags,
       gid,
@@ -123,15 +120,15 @@ class GroupCard extends Component {
               style={{ width: '100%', height: 'auto' }}
             />
             <GroupGridListTileBar
-              title={title}
+              title={<Highlight attribute="title" hit={this.props} />}
               subtitle={
                 updatedAt
-                  ? `Updated ${moment(updatedAt.toDate()).fromNow()}`
-                  : `Created ${moment(createdAt.toDate()).fromNow()}`
+                  ? `Updated ${moment(updatedAt).fromNow()}`
+                  : `Created ${moment(createdAt).fromNow()}`
               }
               actionIcon={
                 <Box p={2}>
-                  <GroupAdd color="secondary" />
+                  <PersonAdd color="secondary" />
                 </Box>
               }
               titlePosition="top"
@@ -148,8 +145,8 @@ class GroupCard extends Component {
             }
             size="small"
             label={`${memberCount ? memberCount : 1} ${
-              limit !== 0 ? `/ ${limit} ` : ''
-            }${limit !== 0 || memberCount !== 1 ? 'members' : 'member'}`}
+              memberCount !== 1 ? 'members' : 'member'
+            }`}
             color="primary"
           />{' '}
           {tags &&
@@ -166,7 +163,7 @@ class GroupCard extends Component {
             variant="body2"
             style={{ whiteSpace: 'pre-line' }}
           >
-            {details}
+            <Highlight attribute="details" hit={this.props} />
           </Typography>
         </CardContent>
         {authstate && (
@@ -194,10 +191,13 @@ GroupCard.propTypes = {
   title: PropTypes.string.isRequired,
   banner: PropTypes.bool,
   details: PropTypes.string,
-  limit: PropTypes.number,
-  memberCount: PropTypes.number.isRequired,
+  closed: PropTypes.bool,
+  memberCount: PropTypes.number,
   tags: PropTypes.arrayOf(PropTypes.string),
-  updatedAt: PropTypes.object
+  createdAt: PropTypes.number.isRequired,
+  updatedAt: PropTypes.number
 };
 
-export default withRouter(withFirebase(withUserSession(GroupCard)));
+export default withRouter(
+  withFirebase(withUserSession(withSnackbar(GroupCard)))
+);

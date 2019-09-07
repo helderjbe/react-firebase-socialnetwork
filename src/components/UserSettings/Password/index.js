@@ -1,15 +1,17 @@
 import React, { Component } from 'react';
 
 import { withFirebase } from '../../Firebase';
+import { withSnackbar } from '../../Snackbar';
 
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
-import { Typography } from '@material-ui/core';
+import { Typography, LinearProgress } from '@material-ui/core';
 
 const INITIAL_STATE = {
   currentPassword: '',
   password: '',
-  confirmPassword: ''
+  confirmPassword: '',
+  loading: false
 };
 
 class UserEmail extends Component {
@@ -28,28 +30,34 @@ class UserEmail extends Component {
     this.setState({ [event.target.name]: event.target.value });
   };
 
-  onSubmit = event => {
+  onSubmit = async event => {
     event.preventDefault();
 
-    const { authstate } = this.props;
+    const { authstate, callSnackbar } = this.props;
     const { currentPassword, password } = this.state;
 
-    this.reAuth(password)
-      .then(() => authstate.updatePassword(currentPassword))
-      .then(() => {
-        this.setState({ ...INITIAL_STATE });
-      })
-      .catch(error => console.error(error.message));
+    await this.setState({ loading: true });
+
+    try {
+      await this.reAuth(password);
+      await authstate.updatePassword(currentPassword);
+      callSnackbar('Password updated successfully', 'success');
+      this.setState({ ...INITIAL_STATE });
+    } catch (error) {
+      this.setState({ loading: false });
+      callSnackbar(error.message, 'error');
+    }
   };
 
   render() {
-    const { password, confirmPassword, currentPassword } = this.state;
+    const { password, confirmPassword, currentPassword, loading } = this.state;
 
     const isInvalid =
       password === '' ||
       password !== confirmPassword ||
       currentPassword.trim() === '' ||
-      password === currentPassword;
+      password === currentPassword ||
+      loading;
 
     return (
       <form onSubmit={this.onSubmit}>
@@ -97,9 +105,10 @@ class UserEmail extends Component {
         >
           Save
         </Button>
+        {loading && <LinearProgress />}
       </form>
     );
   }
 }
 
-export default withFirebase(UserEmail);
+export default withFirebase(withSnackbar(UserEmail));

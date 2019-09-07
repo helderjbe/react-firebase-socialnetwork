@@ -5,7 +5,8 @@ import CardContent from '@material-ui/core/CardContent';
 
 import AuthUserContext from './context';
 import { withFirebase } from '../Firebase';
-import { Typography, Button } from '@material-ui/core';
+import { withSnackbar } from '../Snackbar';
+import { Typography, Button, LinearProgress } from '@material-ui/core';
 
 const needsEmailVerification = authstate =>
   authstate &&
@@ -16,18 +17,24 @@ const needsEmailVerification = authstate =>
 
 const withEmailVerification = Component => {
   class WithEmailVerification extends React.Component {
-    state = { isSent: false, error: null };
+    state = { isSent: false, loading: false };
 
-    onSendEmailVerification = () => {
-      const { api } = this.props;
-      api
-        .doSendEmailVerification()
-        .then(() => this.setState({ isSent: true }))
-        .catch(error => this.setState({ error }));
+    onSendEmailVerification = async () => {
+      const { api, callSnackbar } = this.props;
+
+      await this.setState({ loading: true });
+
+      try {
+        await api.doSendEmailVerification();
+        this.setState({ isSent: true, loading: false });
+      } catch (error) {
+        this.setState({ loading: false });
+        callSnackbar(error.message, 'error');
+      }
     };
 
     render() {
-      const { isSent, error } = this.state;
+      const { isSent, loading } = this.state;
 
       return (
         <AuthUserContext.Consumer>
@@ -50,13 +57,11 @@ const withEmailVerification = Component => {
                     variant="contained"
                     color="primary"
                     onClick={this.onSendEmailVerification}
-                    disabled={isSent}
+                    disabled={isSent || loading}
                   >
                     Send confirmation E-Mail
                   </Button>
-                  {error && (
-                    <Typography color="error">{error.message}</Typography>
-                  )}
+                  {loading && <LinearProgress />}
                 </CardContent>
               </Card>
             ) : (
@@ -68,7 +73,7 @@ const withEmailVerification = Component => {
     }
   }
 
-  return withFirebase(WithEmailVerification);
+  return withFirebase(withSnackbar(WithEmailVerification));
 };
 
 export default withEmailVerification;

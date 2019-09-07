@@ -3,7 +3,9 @@ import PropTypes from 'prop-types';
 
 import { Link, withRouter } from 'react-router-dom';
 import * as ROUTES from '../../constants/routes';
+
 import { withFirebase } from '../Firebase';
+import { withSnackbar } from '../Snackbar';
 
 import InfiniteScroll from 'react-infinite-scroller';
 
@@ -22,7 +24,6 @@ import Image from '@material-ui/icons/Image';
 import Send from '@material-ui/icons/Send';
 import Person from '@material-ui/icons/Person';
 import Description from '@material-ui/icons/Description';
-import Settings from '@material-ui/icons/Settings';
 import FolderShared from '@material-ui/icons/FolderShared';
 import { styled, useTheme } from '@material-ui/core/styles';
 
@@ -121,7 +122,6 @@ class Group extends Component {
     users: {},
     avatars: {},
     profileIdOpen: null,
-    errorMsg: '',
     hasMore: true
   };
 
@@ -133,7 +133,8 @@ class Group extends Component {
       authstate,
       match: {
         params: { gid }
-      }
+      },
+      callSnackbar
     } = this.props;
 
     this.listener = api
@@ -165,12 +166,12 @@ class Group extends Component {
           });
         },
         error => {
-          this.setState({ errorMsg: error.message });
+          callSnackbar(error.message, 'error');
         }
       );
   }
 
-  fetchOldMessages = () => {
+  fetchOldMessages = async () => {
     const snapshotLimit = 20;
 
     const orderBy = 'createdAt';
@@ -180,53 +181,53 @@ class Group extends Component {
       match: {
         params: { gid }
       },
-      authstate
+      authstate,
+      callSnackbar
     } = this.props;
     const { data, hasMore } = this.state;
 
     if (!hasMore || this.isFetching) return false;
     this.isFetching = true;
 
-    api
-      .refGroupMessages(gid)
-      .orderBy(orderBy, 'desc')
-      .startAfter(data[0][orderBy])
-      .limit(snapshotLimit)
-      .get()
-      .then(snapshots => {
-        snapshots.docChanges().forEach(snapshot => {
-          this.setState(state => {
-            const snapshotData = snapshot.doc.data();
-            if (
-              snapshotData.from !== authstate.uid &&
-              !(snapshotData.from in state.users)
-            ) {
-              this.handleNewUser(snapshotData.from);
-            }
+    try {
+      const snapshots = await api
+        .refGroupMessages(gid)
+        .orderBy(orderBy, 'desc')
+        .startAfter(data[0][orderBy])
+        .limit(snapshotLimit)
+        .get();
 
-            return {
-              data: [snapshotData, ...state.data]
-            };
-          });
+      snapshots.docChanges().forEach(snapshot => {
+        this.setState(state => {
+          const snapshotData = snapshot.doc.data();
+          if (
+            snapshotData.from !== authstate.uid &&
+            !(snapshotData.from in state.users)
+          ) {
+            this.handleNewUser(snapshotData.from);
+          }
+
+          return {
+            data: [snapshotData, ...state.data]
+          };
         });
-
-        return snapshots.docs.length;
-      })
-      .then(snapshotLength => {
-        if (snapshotLength < snapshotLimit)
-          return this.setState({ hasMore: false });
-      })
-      .then(() => (this.isFetching = false))
-      .catch(error => {
-        this.setState({ errorMsg: error.message });
       });
+
+      if (snapshots.docs.length < snapshotLimit) {
+        this.setState({ hasMore: false });
+      }
+
+      this.isFetching = false;
+    } catch (error) {
+      callSnackbar(error.message, 'error');
+    }
   };
 
   componentWillUnmount() {
     this.listener();
   }
 
-  onSubmit = event => {
+  onSubmit = async event => {
     event.preventDefault();
     const { text, file } = this.state;
     const {
@@ -234,23 +235,26 @@ class Group extends Component {
       api,
       match: {
         params: { gid }
-      }
+      },
+      callSnackbar
     } = this.props;
 
     if (!file && text.trim() === '') {
       return;
     }
 
-    api
-      .refGroupMessages(gid)
-      .add({
+    try {
+      await api.refGroupMessages(gid).add({
         from: authstate.uid,
-        createdAt: api.firebase.firestore.FieldValue.serverTimestamp(),
+        createdAt: api.firebase.firestore.Timestamp.now().toMillis(),
         text,
         file
-      })
-      .then(_doc => this.setState({ text: '', file: false }))
-      .catch(error => this.setState({ errorMsg: error.message }));
+      });
+
+      this.setState({ text: '', file: false });
+    } catch (error) {
+      callSnackbar(error.message, 'error');
+    }
   };
 
   handleKeyDown = event => {
@@ -259,32 +263,29 @@ class Group extends Component {
     }
   };
 
-  handleNewUser = uid => {
-    const { api } = this.props;
+  handleNewUser = async uid => {
+    const { api, callSnackbar } = this.props;
 
-    api
-      .refUserById(uid)
-      .get()
-      .then(doc => {
-        const userData = doc.data();
-        if (userData.avatar) {
-          api
-            .refUserAvatar(uid)
-            .getDownloadURL()
-            .then(url => {
-              this.setState(state => ({
-                avatars: { ...state.avatars, [uid]: url }
-              }));
-            });
-        } else {
-          this.setState(state => ({
-            avatars: { ...state.avatars, [uid]: '' }
-          }));
-        }
+    try {
+      const doc = await api.refUserById(uid).get();
+      const userData = doc.data();
+
+      if (userData && userData.avatar) {
+        const url = await api.refUserAvatar(uid).getDownloadURL();
         this.setState(state => ({
-          users: { ...state.users, [doc.id]: userData }
+          avatars: { ...state.avatars, [uid]: url }
         }));
-      });
+      } else {
+        this.setState(state => ({
+          avatars: { ...state.avatars, [uid]: '' }
+        }));
+      }
+      this.setState(state => ({
+        users: { ...state.users, [doc.id]: userData }
+      }));
+    } catch (error) {
+      callSnackbar(error.message, 'error');
+    }
   };
 
   handleProfileIdOpen = profileIdOpen => () => {
@@ -400,13 +401,13 @@ class Group extends Component {
             </IconButton>
           </InputContainer>
         </form>
-        {users[profileIdOpen] && (
+        {profileIdOpen && (
           <UserProfileModal
             handleClose={this.handleProfileIdClose}
             open={Boolean(profileIdOpen)}
             avatarUrl={avatars[profileIdOpen]}
-            name={users[profileIdOpen].name}
-            bio={users[profileIdOpen].about}
+            name={users[profileIdOpen] && users[profileIdOpen].name}
+            about={users[profileIdOpen] && users[profileIdOpen].about}
           />
         )}
       </>
@@ -422,4 +423,4 @@ Group.propTypes = {
   })
 };
 
-export default withRouter(withFirebase(Group));
+export default withRouter(withFirebase(withSnackbar(Group)));

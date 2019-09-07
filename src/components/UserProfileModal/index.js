@@ -45,8 +45,7 @@ UserProfileModal.propTypes = {
   avatarUrl: PropTypes.string,
   name: PropTypes.string,
   about: PropTypes.string,
-  open: PropTypes.bool,
-  uid: PropTypes.string
+  open: PropTypes.bool
 };
 
 export default UserProfileModal;

@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import withAuthState, { withUserSession } from './components/Session';
+import withSnackbarProvider from './components/Snackbar';
 
 import { MediaQueryXsDown, MediaQuerySmUp } from './aux/mediaQueries';
 import * as ROUTES from './constants/routes';
@@ -88,4 +89,4 @@ App.propTypes = {
   authstate: PropTypes.object
 };
 
-export default withAuthState(withUserSession(App));
+export default withAuthState(withUserSession(withSnackbarProvider(App)));

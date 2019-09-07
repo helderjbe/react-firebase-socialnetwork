@@ -6,6 +6,7 @@ import moment from 'moment';
 import makeCancelable from 'makecancelable';
 
 import { withFirebase } from '../Firebase';
+import { withSnackbar } from '../Snackbar';
 
 import { Link, withRouter } from 'react-router-dom';
 import * as ROUTES from '../../constants/routes';
@@ -22,13 +23,12 @@ class GroupRow extends Component {
   };
 
   componentDidMount() {
-    const { gid, api, banner } = this.props;
+    const { gid, api, banner, callSnackbar } = this.props;
 
     if (banner) {
       this.cancelRequest = makeCancelable(
         api.refGroupBanner(gid).getDownloadURL(),
-        url => url && this.setState({ bannerUrl: url }),
-        error => this.setState({ error })
+        url => url && this.setState({ bannerUrl: url })
       );
     }
 
@@ -40,7 +40,7 @@ class GroupRow extends Component {
         .get(),
       snapshots =>
         snapshots.forEach(snapshot => this.setState({ ...snapshot.data() })),
-      error => this.setState({ error })
+      error => callSnackbar(error.message, 'error')
     );
   }
 
@@ -75,7 +75,7 @@ class GroupRow extends Component {
             title={title}
             subtitle={
               createdAt
-                ? `[ ${moment(createdAt.toDate()).fromNow()} ] ${text}`
+                ? `[ ${moment(createdAt).fromNow()} ] ${text}`
                 : 'No messages'
             }
             titlePosition="top"
@@ -89,10 +89,10 @@ class GroupRow extends Component {
 GroupRow.propTypes = {
   api: PropTypes.object.isRequired,
   gid: PropTypes.string.isRequired,
-  limit: PropTypes.number,
+  closed: PropTypes.bool,
   memberCount: PropTypes.number.isRequired,
   title: PropTypes.string.isRequired,
   banner: PropTypes.bool
 };
 
-export default withRouter(withFirebase(GroupRow));
+export default withRouter(withFirebase(withSnackbar(GroupRow)));

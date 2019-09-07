@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { withRouter } from 'react-router-dom';
-
 import makeCancelable from 'makecancelable';
 
 import moment from 'moment';
@@ -15,7 +13,6 @@ import ListItemText from '@material-ui/core/ListItemText';
 import ListItemAvatar from '@material-ui/core/ListItemAvatar';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import IconButton from '@material-ui/core/IconButton';
-import Box from '@material-ui/core/Box';
 import Avatar from '@material-ui/core/Avatar';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/styles';
@@ -23,6 +20,7 @@ import { withStyles } from '@material-ui/styles';
 import RemoveCircle from '@material-ui/icons/RemoveCircle';
 
 import UserProfileModal from '../UserProfileModal';
+import ConfirmAction from '../ConfirmAction';
 
 import defaultAvatar from '../../common/images/defaultAvatar.jpg';
 
@@ -41,7 +39,13 @@ const MakeAdminAvatar = withStyles(theme => ({
 }))(Avatar);
 
 class MemberRow extends Component {
-  state = { avatarUrl: null, profileOpen: false };
+  state = {
+    avatarUrl: null,
+    profileOpen: false,
+    confirmActionOpen: false,
+    makeAdmin: false,
+    loading: false
+  };
 
   componentDidMount() {
     const { api, user, uid } = this.props;
@@ -73,20 +77,54 @@ class MemberRow extends Component {
     this.setState({ profileOpen: false });
   };
 
+  handleConfirmActionOpen = makeAdmin => () => {
+    this.setState({
+      confirmActionOpen: true,
+      makeAdmin
+    });
+  };
+
+  handleConfirmActionClose = () => {
+    this.setState({
+      confirmActionOpen: false
+    });
+  };
+
+  handleActionType = type => {
+    const { handleBanUser, handleMakeAdmin, entryIndex } = this.props;
+
+    switch (type) {
+      case 'admin':
+        return handleMakeAdmin(entryIndex);
+      case 'ban':
+        return handleBanUser(entryIndex);
+      default:
+        return;
+    }
+  };
+
+  handleAction = type => async () => {
+    await this.setState({ loading: true });
+
+    await this.handleActionType(type);
+
+    this.setState({ loading: false });
+    this.handleConfirmActionClose();
+  };
+
   render() {
-    const {
-      role,
-      createdAt,
-      user,
-      match: {
-        params: { gid }
-      }
-    } = this.props;
+    const { role, createdAt, user } = this.props;
 
     const name = user ? user.name : undefined;
     const about = user ? user.about : undefined;
 
-    const { avatarUrl, profileOpen } = this.state;
+    const {
+      avatarUrl,
+      profileOpen,
+      confirmActionOpen,
+      makeAdmin,
+      loading
+    } = this.state;
 
     return (
       <>
@@ -99,18 +137,25 @@ class MemberRow extends Component {
               primary={name || 'No Name'}
               secondary={
                 <Typography variant="body2" color="textPrimary">
-                  {createdAt &&
-                    `Joined ${moment(createdAt.toDate()).format('ll')}`}
+                  {createdAt && `Joined ${moment(createdAt).format('ll')}`}
                 </Typography>
               }
             />
             {role !== 'admin' && (
               <ListItemSecondaryAction>
-                <IconButton color="primary" aria-label="make admin">
+                <IconButton
+                  color="primary"
+                  aria-label="make admin"
+                  onClick={this.handleConfirmActionOpen(true)}
+                >
                   <MakeAdminAvatar>A</MakeAdminAvatar>
                 </IconButton>
 
-                <BanButton edge="end" aria-label="remove">
+                <BanButton
+                  edge="end"
+                  aria-label="remove"
+                  onClick={this.handleConfirmActionOpen(false)}
+                >
                   <RemoveCircle />
                 </BanButton>
               </ListItemSecondaryAction>
@@ -130,6 +175,25 @@ class MemberRow extends Component {
               about={about}
             />
           )}
+          {confirmActionOpen && (
+            <ConfirmAction
+              handleClose={this.handleConfirmActionClose}
+              open={confirmActionOpen}
+              handleAction={
+                makeAdmin
+                  ? this.handleAction('admin')
+                  : this.handleAction('ban')
+              }
+              text={makeAdmin ? 'Accept' : 'Ban'}
+              red={!makeAdmin}
+              dialogTitle={
+                makeAdmin
+                  ? `Make ${name || 'No Name'} admin?`
+                  : `Ban ${name || 'No Name'}?`
+              }
+              loading={loading}
+            />
+          )}
         </List>
       </>
     );
@@ -137,16 +201,17 @@ class MemberRow extends Component {
 }
 
 MemberRow.propTypes = {
+  handleBanUser: PropTypes.func,
+  handleMakeAdmin: PropTypes.func,
   user: PropTypes.shape({
     avatar: PropTypes.bool,
     about: PropTypes.string,
     name: PropTypes.string
   }),
-  match: PropTypes.shape({
-    params: PropTypes.object.isRequired
-  }),
+  uid: PropTypes.string.isRequired,
   role: PropTypes.string.isRequired,
-  createdAt: PropTypes.object.isRequired
+  createdAt: PropTypes.number.isRequired,
+  entryIndex: PropTypes.number.isRequired
 };
 
-export default withRouter(withFirebase(MemberRow));
+export default withFirebase(MemberRow);

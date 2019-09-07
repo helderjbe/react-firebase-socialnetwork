@@ -5,6 +5,7 @@ import makeCancelable from 'makecancelable';
 
 import { withRouter } from 'react-router-dom';
 import { withFirebase } from '../Firebase';
+import { withSnackbar } from '../Snackbar';
 
 import Cropper from 'react-easy-crop';
 import getCroppedImg, { readFile } from '../../aux/imageUtils';
@@ -21,6 +22,9 @@ import Avatar from '@material-ui/core/Avatar';
 import Divider from '@material-ui/core/Divider';
 import Dialog from '@material-ui/core/Dialog';
 import Box from '@material-ui/core/Box';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
+import LinearProgress from '@material-ui/core/LinearProgress';
 import Edit from '@material-ui/icons/Edit';
 import { withStyles } from '@material-ui/core';
 
@@ -50,7 +54,7 @@ class EditGroup extends Component {
     title: '',
     details: '',
     questions: ['', '', ''],
-    limit: 0,
+    closed: false,
     tags: [],
 
     imageSrc: null,
@@ -60,7 +64,7 @@ class EditGroup extends Component {
     croppedAreaPixels: null,
     imageCropDialog: false,
 
-    error: null
+    loading: false
   };
 
   componentDidMount() {
@@ -68,7 +72,8 @@ class EditGroup extends Component {
       api,
       match: {
         params: { gid }
-      }
+      },
+      callSnackbar
     } = this.props;
 
     this.cancelRequest = makeCancelable(
@@ -81,12 +86,11 @@ class EditGroup extends Component {
             api.refGroupBanner(gid).getDownloadURL(),
             url => {
               url && this.setState({ croppedImage: url });
-            },
-            error => this.setState({ error })
+            }
           );
         }
       },
-      error => this.setState({ error })
+      error => callSnackbar(error.message, 'error')
     );
   }
 
@@ -107,7 +111,7 @@ class EditGroup extends Component {
       banner,
       title,
       details,
-      limit,
+      closed,
       tags,
       questions,
       croppedImage,
@@ -118,48 +122,53 @@ class EditGroup extends Component {
       history,
       match: {
         params: { gid }
-      }
+      },
+      callSnackbar
     } = this.props;
 
-    if (!!imageSrc) {
-      await api
-        .refGroupBanner(gid)
-        .putString(croppedImage, 'data_url')
-        .catch(error => {
-          this.setState({
-            error: {
-              message:
-                'No sufficient permissions to update the banner. If recent changes have happened to the group, please allow a few more seconds before updating again.'
-            }
-          });
-        });
-    }
+    await this.setState({ loading: true });
 
-    api
-      .refGroupById(gid)
-      .update({
-        banner: banner || !!imageSrc,
-        title,
-        details,
-        limit: Number(limit) === 1 ? 2 : Number(limit),
-        tags,
-        questions
-      })
-      .then(() => {
+    try {
+      const token = await api.doGetIdTokenResult();
+
+      if (
+        token &&
+        token.claims &&
+        token.claims.groups &&
+        token.claims.groups[gid] === 'admin'
+      ) {
+        await api.refGroupById(gid).update({
+          banner: banner || !!imageSrc,
+          title,
+          details,
+          closed,
+          tags,
+          questions
+        });
+
+        if (imageSrc) {
+          await api.refGroupBanner(gid).putString(croppedImage, 'data_url');
+        }
+
+        callSnackbar('Group updated successfully', 'success');
         history.push(ROUTES.HOME);
-      })
-      .catch(error => {
-        this.setState({ error });
-      });
+      } else {
+        this.setState({ loading: false });
+        callSnackbar(
+          'No sufficient permissions to update. If recent changes have happened to the group, please wait a few seconds.',
+          'error'
+        );
+      }
+    } catch (error) {
+      this.setState({ loading: false });
+      callSnackbar(error.message, 'error');
+    }
   };
 
   onSelectImage = async e => {
     if (e.target.files && e.target.files.length > 0) {
       const imageDataUrl = await readFile(e.target.files[0]);
-      this.setState({
-        imageSrc: imageDataUrl
-      });
-      this.setState({ imageCropDialog: true });
+      this.setState({ imageCropDialog: true, imageSrc: imageDataUrl });
     }
   };
 
@@ -198,6 +207,10 @@ class EditGroup extends Component {
     this.setState({ [event.target.name]: event.target.value });
   };
 
+  onChangeCheckbox = event => {
+    this.setState({ [event.target.name]: event.target.checked });
+  };
+
   onChangeQuestions = event => {
     const questionNumber = event.target.name.match(/\d+/)[0];
     const value = event.target.value;
@@ -232,18 +245,17 @@ class EditGroup extends Component {
     const {
       title,
       details,
-      limit,
-      memberCount,
+      closed,
       tags,
       questions,
       zoom,
       imageSrc,
       croppedImage,
       imageCropDialog,
-      error
+      loading
     } = this.state;
 
-    const isInvalid = title.length < 6;
+    const isInvalid = title.length < 6 || loading;
 
     return (
       <form autoComplete="off" onSubmit={this.onSubmit}>
@@ -346,18 +358,6 @@ class EditGroup extends Component {
           onAdd={this.onTagAdd}
           onDelete={this.onTagDelete}
         />
-        <TextField
-          type="number"
-          variant="outlined"
-          margin="normal"
-          fullWidth
-          label="Member limit"
-          name="limit"
-          value={limit}
-          onChange={this.onChange}
-          inputProps={{ min: 0 }}
-          helperText="0 = Unlimited"
-        />
         <Box mt={3} mb={2}>
           <Divider variant="middle" />
         </Box>
@@ -413,6 +413,28 @@ class EditGroup extends Component {
           value={questions[2]}
           onChange={this.onChangeQuestions}
         />
+        <Box mt={3} mb={2}>
+          <Divider variant="middle" />
+        </Box>
+        <FormControlLabel
+          control={
+            <Checkbox
+              name="closed"
+              checked={closed}
+              onChange={this.onChangeCheckbox}
+              color="default"
+            />
+          }
+          label={
+            <>
+              Close group to new applications
+              <br />
+              <Typography variant="caption" paragraph color="textSecondary">
+                Also unlists the group from the home page
+              </Typography>
+            </>
+          }
+        />
         <Button
           type="submit"
           fullWidth
@@ -423,9 +445,7 @@ class EditGroup extends Component {
         >
           Update
         </Button>
-        <Typography color="error" variant="body2">
-          {error && error.message}
-        </Typography>
+        {loading && <LinearProgress />}
       </form>
     );
   }
@@ -439,4 +459,4 @@ EditGroup.propTypes = {
   })
 };
 
-export default withRouter(withFirebase(EditGroup));
+export default withRouter(withFirebase(withSnackbar(EditGroup)));

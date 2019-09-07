@@ -1,42 +1,40 @@
 import React, { Component } from 'react';
 
-import { withFirebase } from '../../components/Firebase';
 import { withRouter } from 'react-router-dom';
-
 import * as ROUTES from '../../constants/routes';
+
+import { withFirebase } from '../Firebase';
+import { withSnackbar } from '../Snackbar';
 
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
-
-const INITIAL_STATE = {
-  email: '',
-  password: '',
-  confirmPassword: '',
-  error: null
-};
+import { LinearProgress } from '@material-ui/core';
 
 class SignUp extends Component {
-  state = { ...INITIAL_STATE };
+  state = { email: '', password: '', confirmPassword: '', loading: false };
 
-  onSubmit = event => {
+  onSubmit = async event => {
     event.preventDefault();
 
     const { email, password } = this.state;
-    const { api, history } = this.props;
+    const { api, history, callSnackbar } = this.props;
 
-    api
-      .doCreateUserWithEmailAndPassword(email, password)
-      .then(_authUser => {
-        return api.doSendEmailVerification();
-      })
-      .then(() => {
-        this.setState({ ...INITIAL_STATE });
-        history.push(ROUTES.SETTINGS);
-      })
-      .catch(error => {
-        this.setState({ error });
-      });
+    await this.setState({ loading: true });
+
+    try {
+      await api.doCreateUserWithEmailAndPassword(email, password);
+      await api.doSendEmailVerification(email);
+
+      callSnackbar(
+        'Please validate your email by clicking the link sent to your inbox',
+        'info'
+      );
+      history.push(ROUTES.SETTINGS);
+    } catch (error) {
+      this.setState({ loading: false });
+      callSnackbar(error.message, 'error');
+    }
   };
 
   onChange = event => {
@@ -44,10 +42,13 @@ class SignUp extends Component {
   };
 
   render() {
-    const { email, password, confirmPassword, error } = this.state;
+    const { email, password, confirmPassword, loading } = this.state;
 
     const isInvalid =
-      password !== confirmPassword || password === '' || email === '';
+      password !== confirmPassword ||
+      password === '' ||
+      email === '' ||
+      loading;
 
     return (
       <form onSubmit={this.onSubmit}>
@@ -95,12 +96,10 @@ class SignUp extends Component {
         >
           Sign Up
         </Button>
-        <Typography color="error" variant="body2">
-          {error && error.message}
-        </Typography>
+        {loading && <LinearProgress />}
       </form>
     );
   }
 }
 
-export default withRouter(withFirebase(SignUp));
+export default withRouter(withFirebase(withSnackbar(SignUp)));

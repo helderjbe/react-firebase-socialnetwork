@@ -9,6 +9,7 @@ import {
   withProtectedRoute,
   withEmailVerification
 } from '../../components/Session';
+import withSnackbar from '../../components/Snackbar';
 
 import Card from '@material-ui/core/Card';
 import Grid from '@material-ui/core/Grid';
@@ -19,10 +20,10 @@ import GroupRow from '../../components/GroupRow';
 import { CardContent } from '@material-ui/core';
 
 class GroupsPage extends Component {
-  state = { data: [], errorMsg: '', hasMore: true };
+  state = { data: [], hasMore: true };
 
   componentDidMount() {
-    const { api } = this.props;
+    const { api, callSnackabr } = this.props;
 
     this.groupIds = null;
     this.cancelRequest2 = {};
@@ -36,7 +37,7 @@ class GroupsPage extends Component {
         this.groupIds = Object.keys(token.claims.groups);
         this.fetchGroups();
       },
-      error => this.setState({ error })
+      error => callSnackabr(error, 'error')
     );
   }
 
@@ -81,7 +82,7 @@ class GroupsPage extends Component {
   };
 
   render() {
-    const { data, errorMsg, hasMore } = this.state;
+    const { data, hasMore } = this.state;
 
     return (
       <Grid
@@ -97,7 +98,7 @@ class GroupsPage extends Component {
           </Box>
         }
       >
-        {data.length === 0 && errorMsg === '' && (this.loaded || !hasMore) && (
+        {data.length === 0 && (this.loaded || !hasMore) && (
           <Grid item xs={12}>
             <Card>
               <CardContent>No groups under your belt yet</CardContent>
@@ -109,8 +110,6 @@ class GroupsPage extends Component {
             <GroupRow {...entry} />
           </Grid>
         ))}
-
-        {errorMsg !== '' ? errorMsg : null}
       </Grid>
     );
   }
@@ -122,4 +121,6 @@ GroupsPage.propTypes = {
 
 const condition = authUser => Boolean(authUser);
 
-export default withProtectedRoute(condition)(withEmailVerification(GroupsPage));
+export default withProtectedRoute(condition)(
+  withEmailVerification(withSnackbar(GroupsPage))
+);

@@ -12,6 +12,7 @@ import {
   withProtectedRoute,
   withEmailVerification
 } from '../../../components/Session';
+import { withSnackbar } from '../../../components/Snackbar';
 
 import Card from '@material-ui/core/Card';
 import Grid from '@material-ui/core/Grid';
@@ -23,7 +24,7 @@ import Close from '@material-ui/icons/Close';
 import MemberRow from '../../../components/MemberRow';
 import { CardContent, Box, withStyles } from '@material-ui/core';
 
-import LeaveDialog from './leaveGroup';
+import ConfirmAction from '../../../components/ConfirmAction';
 
 const LeaveButton = withStyles(theme => ({
   root: {
@@ -33,12 +34,12 @@ const LeaveButton = withStyles(theme => ({
 
 class MembersGroupPage extends Component {
   state = {
-    errorMsg: '',
     data: [],
     userData: {},
     leaveDialogOpen: false,
     profileIdOpen: null,
-    hasMore: true
+    hasMore: true,
+    loading: false
   };
 
   componentDidMount() {
@@ -59,6 +60,90 @@ class MembersGroupPage extends Component {
     this.setState(state => ({ leaveDialogOpen: !state.leaveDialogOpen }));
   };
 
+  handleLeave = async () => {
+    const {
+      authstate,
+      api,
+      match: {
+        params: { gid }
+      },
+      history,
+      callSnackbar
+    } = this.props;
+
+    this.setState({ loading: true });
+
+    try {
+      await api.refGroupMemberById(gid, authstate.uid).delete();
+
+      callSnackbar('You left the group', 'info');
+      history.push(ROUTES.HOME);
+    } catch (error) {
+      this.setState({ loading: false });
+      callSnackbar(error.message, 'error');
+    }
+  };
+
+  handleMakeAdmin = async index => {
+    const {
+      api,
+      match: {
+        params: { gid }
+      },
+      callSnackbar
+    } = this.props;
+    const { userData, data } = this.state;
+
+    const uid = data[index].uid;
+
+    const name = userData[uid] ? userData[uid].name : undefined;
+
+    try {
+      await api.refGroupMemberById(gid, uid).update({
+        role: 'admin'
+      });
+      callSnackbar(
+        `${name || 'No Name'} is now an admin of this group`,
+        'info'
+      );
+      this.setState(state => {
+        const data = [...state.data];
+        data[index].role = 'admin';
+        return { data };
+      });
+    } catch (error) {
+      callSnackbar(error.message, 'error');
+    }
+  };
+
+  handleBanUser = async index => {
+    const {
+      api,
+      match: {
+        params: { gid }
+      },
+      callSnackbar
+    } = this.props;
+    const { userData, data } = this.state;
+
+    const uid = data[index].uid;
+
+    const name = userData[uid] ? userData[uid].name : undefined;
+
+    try {
+      await api.refGroupMemberById(gid, uid).delete();
+
+      callSnackbar(`${name || 'No Name'} has been banned`, 'info');
+      this.setState(state => {
+        const data = [...state.data];
+        data.splice(index, 1);
+        return { data };
+      });
+    } catch (error) {
+      callSnackbar(error.message, 'error');
+    }
+  };
+
   fetchMembers = () => {
     const snapshotLimit = 25;
 
@@ -68,7 +153,8 @@ class MembersGroupPage extends Component {
       api,
       match: {
         params: { gid }
-      }
+      },
+      callSnackbar
     } = this.props;
     const { data, hasMore } = this.state;
 
@@ -98,7 +184,7 @@ class MembersGroupPage extends Component {
                 userData: { [userSnapshot.id]: { ...userSnapshot.data() } }
               }));
             },
-            error => this.setState({ errorMsg: error.message })
+            error => callSnackbar(error.message, 'error')
           );
         });
 
@@ -107,18 +193,16 @@ class MembersGroupPage extends Component {
 
         this.isFetching = false;
       },
-      error => this.setState({ errorMsg: error.message })
+      error => callSnackbar(error.message, 'error')
     );
   };
 
   render() {
-    const { errorMsg, data, hasMore, userData, leaveDialogOpen } = this.state;
+    const { data, hasMore, userData, leaveDialogOpen, loading } = this.state;
     const {
       match: {
         params: { gid }
-      },
-      authstate,
-      api
+      }
     } = this.props;
 
     return (
@@ -154,21 +238,31 @@ class MembersGroupPage extends Component {
             return (
               <Grid item xs={12} key={`memberrow ${index}`}>
                 <Card>
-                  <MemberRow {...entry} user={userData[entry.uid]} />
+                  <MemberRow
+                    {...entry}
+                    user={userData[entry.uid]}
+                    uid={entry.uid}
+                    entryIndex={index}
+                    handleBanUser={this.handleBanUser}
+                    handleMakeAdmin={this.handleMakeAdmin}
+                    loading={loading}
+                  />
                 </Card>
               </Grid>
             );
           })}
-
-          {errorMsg !== '' ? errorMsg : null}
         </Grid>
-        <LeaveDialog
-          handleClose={this.handleLeaveDialog}
-          open={leaveDialogOpen}
-          authstate={authstate}
-          api={api}
-          gid={gid}
-        />
+        {leaveDialogOpen && (
+          <ConfirmAction
+            handleClose={this.handleLeaveDialog}
+            open={leaveDialogOpen}
+            handleAction={this.handleLeave}
+            red={true}
+            dialogTitle="Are you sure you want to leave this group?"
+            loading={loading}
+            text="Leave"
+          />
+        )}
       </>
     );
   }
@@ -186,5 +280,5 @@ MembersGroupPage.propTypes = {
 const condition = authUser => Boolean(authUser);
 
 export default withProtectedRoute(condition)(
-  withEmailVerification(withRouter(MembersGroupPage))
+  withEmailVerification(withRouter(withSnackbar(MembersGroupPage)))
 );

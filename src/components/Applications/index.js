@@ -7,10 +7,12 @@ import InfiniteScroll from 'react-infinite-scroller';
 
 import { withRouter } from 'react-router-dom';
 import { withFirebase } from '../Firebase';
+import { withSnackbar } from '../Snackbar';
 
 import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
+import LinearProgress from '@material-ui/core/LinearProgress';
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -28,15 +30,15 @@ class Applications extends Component {
     users: {},
     avatars: {},
     hasMore: true,
-    errorMsg: '',
-    profileIdOpen: null
+    profileIdOpen: null,
+    loading: false
   };
 
   componentDidMount() {
     this.fetchApplications();
   }
 
-  fetchApplications = () => {
+  fetchApplications = async () => {
     const snapshotLimit = 15;
 
     const orderBy = 'createdAt';
@@ -45,7 +47,8 @@ class Applications extends Component {
       api,
       match: {
         params: { gid }
-      }
+      },
+      callSnackbar
     } = this.props;
     const { data, hasMore } = this.state;
 
@@ -63,105 +66,79 @@ class Applications extends Component {
           .orderBy(orderBy, 'desc')
           .limit(snapshotLimit);
 
-    query
-      .get()
-      .then(snapshots => {
-        snapshots.docs.forEach(snapshot => {
-          this.handleUsers(snapshot.id);
-          this.setState(state => ({
-            data: [...state.data, { ...snapshot.data(), uid: snapshot.id }]
-          }));
-        });
-        return snapshots.docs.length;
-      })
-      .then(snapshotLength => {
-        if (snapshotLength < snapshotLimit)
-          return this.setState({ hasMore: false });
-      })
-      .then(() => (this.isFetching = false))
-      .catch(error => {
-        this.setState({ errorMsg: error.message });
-      });
-  };
+    try {
+      const snapshots = await query.get();
 
-  handleUsers = uid => {
-    const { api } = this.props;
-
-    api
-      .refUserById(uid)
-      .get()
-      .then(doc => {
-        const userData = doc.data();
-        if (userData && userData.avatar) {
-          api
-            .refUserAvatar(uid)
-            .getDownloadURL()
-            .then(url => {
-              this.setState(state => ({
-                avatars: { ...state.avatars, [uid]: url }
-              }));
-            });
-        } else {
-          this.setState(state => ({
-            avatars: { ...state.avatars, [uid]: '' }
-          }));
-        }
+      snapshots.docs.forEach(snapshot => {
+        this.handleUsers(snapshot.id);
         this.setState(state => ({
-          users: { ...state.users, [doc.id]: userData || {} }
+          data: [...state.data, { ...snapshot.data(), uid: snapshot.id }]
         }));
-      })
-      .catch(error => {
-        this.setState({ errorMsg: error.message });
       });
+
+      if (snapshots.docs.length < snapshotLimit) {
+        await this.setState({ hasMore: false });
+      }
+
+      this.isFetching = false;
+    } catch (error) {
+      callSnackbar(error.message, 'error');
+    }
   };
 
-  onAccept = (uid, index) => () => {
+  handleUsers = async uid => {
+    const { api, callSnackbar } = this.props;
+
+    try {
+      const doc = await api.refUserById(uid).get();
+      const userData = doc.data();
+
+      if (userData && userData.avatar) {
+        const url = await api.refUserAvatar(uid).getDownloadURL();
+
+        this.setState(state => ({
+          avatars: { ...state.avatars, [uid]: url }
+        }));
+      } else {
+        this.setState(state => ({
+          avatars: { ...state.avatars, [uid]: '' }
+        }));
+      }
+      this.setState(state => ({
+        users: { ...state.users, [doc.id]: userData || {} }
+      }));
+    } catch (error) {
+      callSnackbar(error.message, 'error');
+    }
+  };
+
+  onAction = (uid, index, accepted) => async () => {
     const {
       api,
       match: {
         params: { gid }
-      }
+      },
+      callSnackbar
     } = this.props;
 
-    api
-      .refGroupApplicationById(gid, uid)
-      .update({ accepted: true })
-      .then(() => {
-        api.refGroupApplicationById(gid, uid).delete();
-      })
-      .then(() => {
-        this.setState(state => {
-          const data = [...state.data];
-          data.splice(index, 1);
-          return { data };
-        });
-      })
-      .catch(error => {
-        this.setState({ errorMsg: error.message });
-      });
-  };
+    await this.setState({ loading: true });
 
-  onDecline = (uid, index) => () => {
-    const {
-      api,
-      match: {
-        params: { gid }
+    try {
+      if (accepted) {
+        await api.refGroupApplicationById(gid, uid).update({ accepted: true });
       }
-    } = this.props;
 
-    api
-      .refGroupApplicationById(gid, uid)
-      .delete()
-      .then(() => {
-        this.setState(state => {
-          const data = [...state.data];
-          data.splice(index, 1);
-          return { data };
-        });
-      })
-      .catch(error => {
-        this.setState({ errorMsg: error.message });
+      await api.refGroupApplicationById(gid, uid).delete();
+
+      await this.setState(state => {
+        const data = [...state.data];
+        data.splice(index, 1);
+        return { data, loading: false };
       });
+    } catch (error) {
+      this.setState({ loading: false });
+      callSnackbar(error.message, 'error');
+    }
   };
 
   handleProfileIdOpen = profileIdOpen => () => {
@@ -175,11 +152,11 @@ class Applications extends Component {
   render() {
     const {
       data,
-      errorMsg,
       hasMore,
       profileIdOpen,
       users,
-      avatars
+      avatars,
+      loading
     } = this.state;
 
     return (
@@ -194,13 +171,11 @@ class Applications extends Component {
             </Box>
           }
         >
-          {data.length === 0 &&
-            errorMsg === '' &&
-            (this.isFetching || !hasMore) && (
-              <Box mt={2}>
-                <Typography>No applications received yet</Typography>
-              </Box>
-            )}
+          {data.length === 0 && (this.isFetching || !hasMore) && (
+            <Box mt={2}>
+              <Typography>No applications received yet</Typography>
+            </Box>
+          )}
           {data.map((entry, index) => {
             if (!users[entry.uid]) {
               return (
@@ -231,7 +206,7 @@ class Applications extends Component {
                           : 'No Name'}
                       </Typography>
                       <Typography variant="caption">
-                        {`${moment(entry.createdAt.toDate()).fromNow()}`}
+                        {`${moment(entry.createdAt).fromNow()}`}
                       </Typography>
                     </div>
                   </Box>
@@ -265,23 +240,25 @@ class Applications extends Component {
                     </Box>
                     <Button
                       variant="contained"
-                      onClick={this.onDecline(entry.uid, index)}
+                      disabled={loading}
+                      onClick={this.onAction(entry.uid, index, false)}
                     >
                       Decline
                     </Button>
                     <Button
                       variant="contained"
-                      onClick={this.onAccept(entry.uid, index)}
+                      disabled={loading}
+                      onClick={this.onAction(entry.uid, index, true)}
                       color="primary"
                     >
                       Accept
                     </Button>
                   </Box>
+                  {loading && <LinearProgress />}
                 </ExpansionPanelDetails>
               </ExpansionPanel>
             );
           })}
-          {errorMsg !== '' ? errorMsg : null}
         </InfiniteScroll>
         {users[profileIdOpen] && (
           <UserProfileModal
@@ -289,7 +266,7 @@ class Applications extends Component {
             open={Boolean(profileIdOpen)}
             avatarUrl={avatars[profileIdOpen]}
             name={users[profileIdOpen].name}
-            bio={users[profileIdOpen].about}
+            about={users[profileIdOpen].about}
           />
         )}
       </>
@@ -304,4 +281,4 @@ Applications.propTypes = {
   })
 };
 
-export default withRouter(withFirebase(Applications));
+export default withRouter(withFirebase(withSnackbar(Applications)));

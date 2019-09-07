@@ -2,41 +2,49 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { withRouter } from 'react-router-dom';
-
 import * as ROUTES from '../../../constants/routes';
 
 import { withFirebase } from '../../../components/Firebase';
+import { withSnackbar } from '../../../components/Snackbar';
 
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
+import { LinearProgress } from '@material-ui/core';
 
 class RecoverEmail extends Component {
-  state = { email: null, error: null };
+  state = { email: null, error: null, loading: false };
 
-  componentDidMount() {
+  async componentDidMount() {
     const { api, actionCode } = this.props;
 
-    api.auth
-      .checkActionCode(actionCode)
-      .then(info => {
-        this.setState({ email: info.data.email });
-        return api.auth.applyActionCode(actionCode);
-      })
-      .catch(error => this.setState({ error }));
+    try {
+      const info = await api.auth.checkActionCode(actionCode);
+      this.setState({ email: info.data.email });
+
+      await api.auth.applyActionCode(actionCode);
+    } catch (error) {
+      this.setState({ error });
+    }
   }
 
-  onSubmit = () => {
-    const { api, history } = this.props;
+  onSubmit = async () => {
+    const { api, history, callSnackbar } = this.props;
     const { email } = this.state;
 
-    api.auth
-      .sendPasswordResetEmail(email)
-      .then(() => history.push(ROUTES.HOME))
-      .catch(error => this.setState({ error }));
+    await this.setState({ loading: true });
+
+    try {
+      await api.auth.sendPasswordResetEmail(email);
+      callSnackbar('Password reset email sent', 'info');
+      history.push(ROUTES.HOME);
+    } catch (error) {
+      this.setState({ loading: false });
+      callSnackbar(error.message, 'error');
+    }
   };
 
   render() {
-    const { email, error } = this.state;
+    const { email, error, loading } = this.state;
 
     return (
       <>
@@ -58,6 +66,7 @@ class RecoverEmail extends Component {
             >
               Reset Password
             </Button>
+            {loading && <LinearProgress />}
           </>
         ) : (
           <>{error && <Typography color="error">{error.message}</Typography>}</>
@@ -72,4 +81,4 @@ RecoverEmail.propTypes = {
   actionCode: PropTypes.string.isRequired
 };
 
-export default withRouter(withFirebase(RecoverEmail));
+export default withRouter(withFirebase(withSnackbar(RecoverEmail)));

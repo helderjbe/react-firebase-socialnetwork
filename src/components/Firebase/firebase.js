@@ -3,19 +3,11 @@ import 'firebase/firestore';
 import 'firebase/storage';
 import 'firebase/auth';
 
-const config = {
-  apiKey: process.env.REACT_APP_API_KEY,
-  authDomain: process.env.REACT_APP_AUTH_DOMAIN,
-  databaseURL: process.env.REACT_APP_DATABASE_URL,
-  projectId: process.env.REACT_APP_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_APP_ID
-};
+import { APP_CONFIG } from '../../config';
 
 export default class Firebase {
   constructor() {
-    firebase.initializeApp(config);
+    firebase.initializeApp(APP_CONFIG);
     firebase.firestore().enablePersistence();
 
     this.firebase = firebase;
@@ -51,6 +43,11 @@ export default class Firebase {
   refUsers = () => this.firestore.collection('users');
 
   refUserById = uid => this.refUsers().doc(uid);
+
+  // User Claims
+  refUserClaims = () => this.firestore.collection('userClaims');
+
+  refUserClaimsById = uid => this.refUserClaims().doc(uid);
 
   // *** Auth API ***
 

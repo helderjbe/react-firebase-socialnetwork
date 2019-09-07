@@ -2,44 +2,59 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { withRouter } from 'react-router-dom';
-
 import * as ROUTES from '../../../constants/routes';
 
 import { withFirebase } from '../../../components/Firebase';
+import { withSnackbar } from '../../../components/Snackbar';
 
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
+import { LinearProgress } from '@material-ui/core';
 
 class ResetPassword extends Component {
-  state = { email: null, error: null, password: '', confirmPassword: '' };
+  state = {
+    email: null,
+    error: null,
+    password: '',
+    confirmPassword: '',
+    loading: false
+  };
 
-  componentDidMount() {
+  async componentDidMount() {
     const { api, actionCode } = this.props;
 
-    api.auth
-      .verifyPasswordResetCode(actionCode)
-      .then(email => this.setState({ email }))
-      .catch(error => this.setState({ error }));
+    try {
+      const email = await api.auth.verifyPasswordResetCode(actionCode);
+      this.setState({ email });
+    } catch (error) {
+      this.setState({ error });
+    }
   }
 
-  onSubmit = () => {
-    const { api, actionCode, history } = this.props;
+  onSubmit = async () => {
+    const { api, actionCode, history, callSnackbar } = this.props;
     const { email, password } = this.state;
 
-    api.auth
-      .confirmPasswordReset(actionCode, password)
-      .then(() => {
-        api.auth
-          .signInWithEmailAndPassword(email, password)
-          .then(() => history.push(ROUTES.HOME))
-          .catch(() => history.push(ROUTES.SIGN_IN));
-      })
-      .catch(error => this.setState({ error }));
+    await this.setState({ loading: true });
+
+    try {
+      await api.auth.confirmPasswordReset(actionCode, password);
+      callSnackbar('Password reset successfully', 'success');
+      try {
+        await api.auth.signInWithEmailAndPassword(email, password);
+        history.push(ROUTES.HOME);
+      } catch (error) {
+        history.push(ROUTES.SIGN_IN);
+      }
+    } catch (error) {
+      this.setState({ loading: false });
+      callSnackbar(error.message, 'error');
+    }
   };
 
   render() {
-    const { password, confirmPassword } = this.state;
+    const { password, confirmPassword, loading } = this.state;
 
     const isInvalid = password.length < 6 || password !== confirmPassword;
 
@@ -79,6 +94,7 @@ class ResetPassword extends Component {
           >
             Save
           </Button>
+          {loading && <LinearProgress />}
         </form>
       </>
     );
@@ -90,4 +106,4 @@ ResetPassword.propTypes = {
   actionCode: PropTypes.string.isRequired
 };
 
-export default withRouter(withFirebase(ResetPassword));
+export default withRouter(withFirebase(withSnackbar(ResetPassword)));

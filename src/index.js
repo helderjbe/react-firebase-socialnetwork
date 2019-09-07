@@ -3,6 +3,10 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 
+import { InstantSearch, Configure } from 'react-instantsearch-dom';
+import algoliasearch from 'algoliasearch/lite';
+import { ENV_PREFIX, SEARCH_CONFIG } from './config';
+
 import { ThemeProvider } from '@material-ui/styles';
 import { createMuiTheme } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -17,7 +21,16 @@ ReactDOM.render(
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <FirebaseContext.Provider value={new Firebase()}>
-        <App />
+        <InstantSearch
+          indexName={ENV_PREFIX + process.env.REACT_APP_ALGOLIA_INDEX_NAME}
+          searchClient={algoliasearch(
+            SEARCH_CONFIG.appId,
+            SEARCH_CONFIG.searchKey
+          )}
+        >
+          <App />
+          <Configure hitsPerPage={9} />
+        </InstantSearch>
       </FirebaseContext.Provider>
     </ThemeProvider>
   </>,

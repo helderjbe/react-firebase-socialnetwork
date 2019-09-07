@@ -18,6 +18,8 @@
 5.1 - Change env variables for production
 5.2 - Change index name of algolia in functions
 
+https://www.algolia.com/doc/guides/going-to-production/implementation-checklist/
+
 # TODO
 
 Use react-redux-firebase + redux-firestore?

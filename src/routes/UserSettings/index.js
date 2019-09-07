@@ -16,16 +16,14 @@ import UserPassword from '../../components/UserSettings/Password';
 class UserSettingsPage extends Component {
   state = { editEmailPassword: false };
 
-  componentDidMount() {
+  async componentDidMount() {
     const { api } = this.props;
 
-    api
-      .doGetIdTokenResult()
-      .then(
-        token =>
-          token.signInProvider === 'password' &&
-          this.setState({ editEmailPassword: true })
-      );
+    const token = await api.doGetIdTokenResult();
+
+    if (token.signInProvider === 'password') {
+      this.setState({ editEmailPassword: true });
+    }
   }
   render() {
     const { authstate } = this.props;
