@@ -33,7 +33,7 @@ const withAuthState = Component => {
                   firestoreClaims = snapshot.data();
                 }
 
-                if (equal(firestoreClaims, tokenClaims) === false) {
+                if (!equal(firestoreClaims, tokenClaims)) {
                   api.doAuthStateReload();
                 }
               });

@@ -113,7 +113,7 @@ class MemberRow extends Component {
   };
 
   render() {
-    const { role, createdAt, user } = this.props;
+    const { role, createdAt, user, admin } = this.props;
 
     const name = user ? user.name : undefined;
     const about = user ? user.about : undefined;
@@ -141,7 +141,7 @@ class MemberRow extends Component {
                 </Typography>
               }
             />
-            {role !== 'admin' && (
+            {role !== 'admin' && admin && (
               <ListItemSecondaryAction>
                 <IconButton
                   color="primary"
@@ -211,7 +211,8 @@ MemberRow.propTypes = {
   uid: PropTypes.string.isRequired,
   role: PropTypes.string.isRequired,
   createdAt: PropTypes.number.isRequired,
-  entryIndex: PropTypes.number.isRequired
+  entryIndex: PropTypes.number.isRequired,
+  admin: PropTypes.bool
 };
 
 export default withFirebase(MemberRow);

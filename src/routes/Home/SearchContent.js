@@ -9,6 +9,9 @@ import {
   connectRange
 } from 'react-instantsearch-dom';
 
+import { Link } from 'react-router-dom';
+import * as ROUTES from '../../constants/routes';
+
 import { fade, withStyles, styled } from '@material-ui/core/styles';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import InputBase from '@material-ui/core/InputBase';
@@ -24,6 +27,7 @@ import IconButton from '@material-ui/core/IconButton';
 import Search from '@material-ui/icons/Search';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import ExpandLess from '@material-ui/icons/ExpandLess';
+import GroupAdd from '@material-ui/icons/GroupAdd';
 import { CardContent, Divider, Box, Typography } from '@material-ui/core';
 
 const SearchIcon = styled('div')(({ theme }) => ({
@@ -237,6 +241,9 @@ const SearchContent = () => {
               <LoadingIndicator />
             </SearchIcon>
             <SearchInput />
+            <IconButton component={Link} to={ROUTES.GROUPS_NEW}>
+              <GroupAdd color="inherit" />
+            </IconButton>
             <IconButton
               onClick={handleExpandClick}
               aria-expanded={expanded}
@@ -252,7 +259,6 @@ const SearchContent = () => {
         item
         in={expanded}
         timeout="auto"
-        unmountOnExit
         style={{ width: '100%' }}
       >
         <Card>

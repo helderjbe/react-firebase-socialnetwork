@@ -370,7 +370,7 @@ class EditGroup extends Component {
           label="Details"
           name="details"
           placeholder={
-            "Looking for a group that helps me keep focus on my freelancing path.\nJoin if you're also beginning your freelance career.\n..."
+            "Looking for 4 members to keep each other accountable.\nFreelancers preferrable.\nJoin if you're also struggling to advance your career.\n\n..."
           }
           value={details}
           onChange={this.onChange}

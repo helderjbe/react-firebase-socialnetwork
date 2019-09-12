@@ -39,11 +39,25 @@ class MembersGroupPage extends Component {
     leaveDialogOpen: false,
     profileIdOpen: null,
     hasMore: true,
-    loading: false
+    loading: false,
+    admin: false
   };
 
-  componentDidMount() {
+  async componentDidMount() {
+    const {
+      api,
+      match: {
+        params: { gid }
+      }
+    } = this.props;
+
     this.fetchMembers();
+
+    const token = await api.doGetIdTokenResult();
+
+    if (token.claims.groups[gid] === 'admin') {
+      this.setState({ admin: true });
+    }
   }
 
   componentWillUnmount() {
@@ -198,7 +212,14 @@ class MembersGroupPage extends Component {
   };
 
   render() {
-    const { data, hasMore, userData, leaveDialogOpen, loading } = this.state;
+    const {
+      data,
+      hasMore,
+      userData,
+      leaveDialogOpen,
+      loading,
+      admin
+    } = this.state;
     const {
       match: {
         params: { gid }
@@ -246,6 +267,7 @@ class MembersGroupPage extends Component {
                     handleBanUser={this.handleBanUser}
                     handleMakeAdmin={this.handleMakeAdmin}
                     loading={loading}
+                    admin={admin}
                   />
                 </Card>
               </Grid>

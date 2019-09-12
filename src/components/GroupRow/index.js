@@ -11,11 +11,11 @@ import { withSnackbar } from '../Snackbar';
 import { Link, withRouter } from 'react-router-dom';
 import * as ROUTES from '../../constants/routes';
 
-import ButtonBase from '@material-ui/core/ButtonBase';
-import GridListTile from '@material-ui/core/GridListTile';
-import GridListTileBar from '@material-ui/core/GridListTileBar';
-
-import defaultBanner from '../../common/images/defaultBanner.jpg';
+import Card from '@material-ui/core/Card';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import Typography from '@material-ui/core/Typography';
 
 class GroupRow extends Component {
   state = {
@@ -23,7 +23,7 @@ class GroupRow extends Component {
   };
 
   componentDidMount() {
-    const { gid, api, banner, callSnackbar } = this.props;
+    const { gid, api, banner } = this.props;
 
     if (banner) {
       this.cancelRequest = makeCancelable(
@@ -31,57 +31,61 @@ class GroupRow extends Component {
         url => url && this.setState({ bannerUrl: url })
       );
     }
-
-    this.cancelRequest2 = makeCancelable(
-      api
-        .refGroupMessages(gid)
-        .orderBy('createdAt', 'desc')
-        .limit(1)
-        .get(),
-      snapshots =>
-        snapshots.forEach(snapshot => this.setState({ ...snapshot.data() })),
-      error => callSnackbar(error.message, 'error')
-    );
   }
 
   componentWillUnmount() {
     if (this.cancelRequest) {
       this.cancelRequest();
     }
-
-    if (this.cancelRequest2) {
-      this.cancelRequest2();
-    }
   }
 
   render() {
-    const { title, gid } = this.props;
-    const { bannerUrl, from, createdAt, text } = this.state;
+    const {
+      title,
+      gid,
+      message: { createdAt, text }
+    } = this.props;
+    const { bannerUrl } = this.state;
 
     return (
-      <ButtonBase
-        component={Link}
-        to={ROUTES.GROUPS_ID.replace(':gid', gid)}
-        style={{ display: 'block' }}
-      >
-        <GridListTile component="div">
+      <Card style={{ position: 'relative' }}>
+        {bannerUrl && (
           <img
-            src={bannerUrl || defaultBanner}
+            src={bannerUrl}
             alt={`${title} banner`}
-            style={{ width: '100%', height: 'auto' }}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: 'auto',
+              opacity: 0.1
+            }}
           />
-          <GridListTileBar
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
-            title={title}
-            subtitle={
-              createdAt
-                ? `[ ${moment(createdAt).fromNow()} ] ${text}`
-                : 'No messages'
-            }
-            titlePosition="top"
-          />
-        </GridListTile>
-      </ButtonBase>
+        )}
+        <List style={{ padding: 0 }}>
+          <ListItem
+            button
+            component={Link}
+            to={ROUTES.GROUPS_ID.replace(':gid', gid)}
+          >
+            <ListItemText
+              primary={title}
+              secondary={
+                <Typography
+                  variant="caption"
+                  color="textPrimary"
+                  display="block"
+                >
+                  {createdAt
+                    ? `"${text}", ${moment(createdAt).fromNow()}`
+                    : 'No messages'}
+                </Typography>
+              }
+            />
+          </ListItem>
+        </List>
+      </Card>
     );
   }
 }
@@ -92,7 +96,11 @@ GroupRow.propTypes = {
   closed: PropTypes.bool,
   memberCount: PropTypes.number.isRequired,
   title: PropTypes.string.isRequired,
-  banner: PropTypes.bool
+  banner: PropTypes.bool,
+  message: PropTypes.shape({
+    createdAt: PropTypes.number,
+    text: PropTypes.string
+  })
 };
 
 export default withRouter(withFirebase(withSnackbar(GroupRow)));

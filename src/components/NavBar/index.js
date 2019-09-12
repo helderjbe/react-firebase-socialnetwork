@@ -16,12 +16,12 @@ import Toolbar from '@material-ui/core/Toolbar';
 import useScrollTrigger from '@material-ui/core/useScrollTrigger';
 import Slide from '@material-ui/core/Slide';
 import Typography from '@material-ui/core/Typography';
+import Box from '@material-ui/core/Box';
 
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import ExitToApp from '@material-ui/icons/ExitToApp';
 
 import { IconButton } from '@material-ui/core';
-import { MediaQuerySmUp } from '../../aux/mediaQueries';
 
 const HideOnScroll = props => {
   const { children } = props;
@@ -60,16 +60,20 @@ class NavBar extends Component {
       <HideOnScroll {...this.props}>
         <AppBar position="sticky">
           <Toolbar>
-            <MediaQuerySmUp>
-              <Typography
-                component={'h1'}
-                variant="h6"
-                style={{ display: 'flex', flexGrow: 1 }}
-              >
-                Social Groups
-              </Typography>
-            </MediaQuerySmUp>
-            {authstate ? (
+            <Box mr="auto">
+              <Link to={ROUTES.HOME} style={{ textDecoration: 'none' }}>
+                <Typography component="h1" variant="h6" color="secondary">
+                  Social Groups
+                </Typography>
+              </Link>
+            </Box>
+            <IconButton
+              component={Link}
+              to={authstate ? ROUTES.SETTINGS : ROUTES.SIGN_IN}
+            >
+              <AccountCircle color="secondary" />
+            </IconButton>
+            {authstate && (
               <>
                 <IconButton
                   component={Link}
@@ -79,10 +83,6 @@ class NavBar extends Component {
                   <ExitToApp color="secondary" />
                 </IconButton>
               </>
-            ) : (
-              <IconButton component={Link} to={ROUTES.SIGN_IN}>
-                <AccountCircle color="secondary" />
-              </IconButton>
             )}
           </Toolbar>
         </AppBar>

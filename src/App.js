@@ -1,6 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import StickyBox from 'react-sticky-box';
+
 import withAuthState, { withUserSession } from './components/Session';
 import withSnackbarProvider from './components/Snackbar';
 
@@ -70,7 +72,9 @@ const App = ({ authstate }) => (
         </Grid>
         <MediaQuerySmUp>
           <Grid item sm={4}>
-            <SideBar />
+            <StickyBox offsetTop={72} offsetBottom={20}>
+              <SideBar />
+            </StickyBox>
           </Grid>
         </MediaQuerySmUp>
       </Grid>

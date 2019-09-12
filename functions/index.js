@@ -27,7 +27,8 @@ const ENV_PREFIX = process.env.GCLOUD_PROJECT.includes('prod')
   : 'dev_';
 
 const ALGOLIA_INDEX_NAME = ENV_PREFIX + functions.config().algolia.index_name;
-// TODO: When everyone leaves or group is inactive for x time, delete group
+
+const MAX_GROUPS = functions.config().groups.max;
 
 /* Groups */
 
@@ -139,6 +140,10 @@ exports.onWriteGroupMember = functions.firestore
       }
 
       const updatedClaims = merge.all([currentClaims, newClaims]);
+
+      if (updatedClaims.groups.length > MAX_GROUPS) {
+        return false;
+      }
 
       await auth.setCustomUserClaims(uid, updatedClaims);
       await firestore

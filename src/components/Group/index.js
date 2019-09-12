@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
 import { Link, withRouter } from 'react-router-dom';
@@ -114,6 +114,256 @@ Message.propTypes = {
   name: PropTypes.string
 };
 
+const Group = ({
+  authstate,
+  match: {
+    params: { gid }
+  },
+  api,
+  callSnackbar
+}) => {
+  const initialSnapshotLimit = 20;
+
+  const [text, setText] = useState('');
+  const [file, setFile] = useState(false);
+  const [data, setData] = useState([]);
+  const [users, setUsers] = useState({});
+  const [avatars, setAvatars] = useState({});
+  const [profileIdOpen, setProfileIdOpen] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [admin, setAdmin] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+
+  const handleNewUser = useCallback(
+    async uid => {
+      try {
+        const doc = await api.refUserById(uid).get();
+        const userData = doc.data();
+
+        if (userData && userData.avatar) {
+          const url = await api.refUserAvatar(uid).getDownloadURL();
+          setAvatars(prevAvatars => ({ ...prevAvatars, [uid]: url }));
+        } else {
+          setAvatars(prevAvatars => ({ ...prevAvatars, [uid]: '' }));
+        }
+        setUsers(prevUsers => ({ ...prevUsers, [doc.id]: userData }));
+      } catch (error) {
+        callSnackbar(error.message, 'error');
+      }
+    },
+    [api, callSnackbar]
+  );
+
+  useEffect(() => {
+    const cancelListener = api
+      .refGroupMessages(gid)
+      .orderBy('createdAt', 'desc')
+      .limit(initialSnapshotLimit)
+      .onSnapshot(
+        snapshots => {
+          snapshots.docChanges().forEach(snapshot => {
+            const snapshotData = snapshot.doc.data();
+            if (
+              snapshotData.from !== authstate.uid &&
+              !(snapshotData.from in users)
+            ) {
+              handleNewUser(snapshotData.from);
+            }
+            setData(prevData =>
+              snapshot.newIndex > 0
+                ? [snapshotData, ...prevData]
+                : [...prevData, snapshotData]
+            );
+          });
+          setHasMore(Boolean(snapshots.docs.length >= initialSnapshotLimit));
+        },
+        error => {
+          callSnackbar(error.message, 'error');
+        }
+      );
+
+    const checkAdmin = async () => {
+      const token = await api.doGetIdTokenResult();
+
+      if (token.claims.groups[gid] === 'admin') {
+        setAdmin(true);
+      }
+    };
+    checkAdmin();
+
+    return cancelListener;
+  }, [api, authstate.uid, callSnackbar, gid, handleNewUser, users]);
+
+  const fetchOldMessages = async () => {
+    const snapshotLimit = 20;
+
+    const orderBy = 'createdAt';
+
+    if (!hasMore || isFetching) return false;
+    await setIsFetching(true);
+
+    try {
+      const snapshots = await api
+        .refGroupMessages(gid)
+        .orderBy(orderBy, 'desc')
+        .startAfter(data[0][orderBy])
+        .limit(snapshotLimit)
+        .get();
+
+      snapshots.docChanges().forEach(snapshot => {
+        const snapshotData = snapshot.doc.data();
+        if (
+          snapshotData.from !== authstate.uid &&
+          !(snapshotData.from in users)
+        ) {
+          handleNewUser(snapshotData.from);
+        }
+        setData(prevData => [snapshotData, ...prevData]);
+      });
+
+      if (snapshots.docs.length < snapshotLimit) {
+        setHasMore(false);
+      }
+
+      setIsFetching(false);
+    } catch (error) {
+      callSnackbar(error.message, 'error');
+    }
+  };
+
+  const onSubmit = async event => {
+    event.preventDefault();
+
+    if (!file && text.trim() === '') {
+      return;
+    }
+
+    try {
+      await api.refGroupMessages(gid).add({
+        from: authstate.uid,
+        createdAt: api.firebase.firestore.Timestamp.now().toMillis(),
+        text,
+        file
+      });
+
+      setText('');
+      setFile(false);
+    } catch (error) {
+      callSnackbar(error.message, 'error');
+    }
+  };
+
+  const handleKeyDown = event => {
+    if (event.keyCode === 13 && !event.shiftKey) {
+      onSubmit(event);
+    }
+  };
+
+  const handleProfileIdOpen = pId => () => setProfileIdOpen(pId);
+
+  const handleProfileIdClose = () => setProfileIdOpen(null);
+
+  const onChangeText = event => setText(event.target.value);
+
+  return (
+    <>
+      <TopBar>
+        <Box flexGrow="1" />
+        <IconButton
+          component={Link}
+          to={ROUTES.GROUPS_ID_MEMBERS.replace(':gid', gid)}
+        >
+          <Person />
+        </IconButton>
+        <IconButton
+          component={Link}
+          to={ROUTES.GROUPS_ID_DETAILS.replace(':gid', gid)}
+        >
+          <Description />
+        </IconButton>
+
+        {admin && (
+          <>
+            <VertDivider />
+
+            <IconButton
+              component={Link}
+              to={ROUTES.GROUPS_ID_APPLICATIONS.replace(':gid', gid)}
+            >
+              <FolderShared />
+            </IconButton>
+          </>
+        )}
+      </TopBar>
+
+      <MessageContainer>
+        <InfiniteScroll
+          style={{
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+          initialLoad={false}
+          isReverse={true}
+          loadMore={fetchOldMessages}
+          hasMore={hasMore}
+          useWindow={false}
+          loader={
+            <Box width="100%" textAlign="center" my={2} key={0}>
+              <CircularProgress />
+            </Box>
+          }
+        >
+          {data.map((messageData, index) => {
+            const left = messageData.from !== authstate.uid;
+            const name = users[messageData.from]
+              ? users[messageData.from].name
+              : '';
+            return (
+              <Message
+                key={`message ${index}`}
+                uid={messageData.from}
+                left={left}
+                handleProfileIdOpen={handleProfileIdOpen}
+                name={name}
+                avatarUrl={avatars[messageData.from]}
+              >
+                {messageData.text}
+              </Message>
+            );
+          })}
+        </InfiniteScroll>
+      </MessageContainer>
+
+      <form onSubmit={onSubmit}>
+        <InputContainer>
+          <MessageInput
+            onKeyDown={handleKeyDown}
+            value={text}
+            onChange={onChangeText}
+            name="text"
+            placeholder="Type something"
+            inputProps={{ 'aria-label': 'input message' }}
+            multiline
+            rowsMax="3"
+          />
+          <IconButton component="button" type="submit">
+            <Send />
+          </IconButton>
+        </InputContainer>
+      </form>
+      {profileIdOpen && (
+        <UserProfileModal
+          handleClose={handleProfileIdClose}
+          open={Boolean(profileIdOpen)}
+          avatarUrl={avatars[profileIdOpen]}
+          name={users[profileIdOpen] && users[profileIdOpen].name}
+          about={users[profileIdOpen] && users[profileIdOpen].about}
+        />
+      )}
+    </>
+  );
+};
+/*
 class Group extends Component {
   state = {
     text: '',
@@ -122,10 +372,11 @@ class Group extends Component {
     users: {},
     avatars: {},
     profileIdOpen: null,
-    hasMore: true
+    hasMore: true,
+    admin: false
   };
 
-  componentDidMount() {
+  async componentDidMount() {
     const initialSnapshotLimit = 20;
 
     const {
@@ -143,24 +394,23 @@ class Group extends Component {
       .limit(initialSnapshotLimit)
       .onSnapshot(
         snapshots => {
-          snapshots.docChanges().forEach(snapshot => {
-            !snapshots.metadata.hasPendingWrites &&
-              this.setState(state => {
-                const snapshotData = snapshot.doc.data();
-                if (
-                  snapshotData.from !== authstate.uid &&
-                  !(snapshotData.from in state.users)
-                ) {
-                  this.handleNewUser(snapshotData.from);
-                }
-
-                const dataUpdate =
-                  snapshot.type === 'added'
+          snapshots.docChanges().forEach(snapshot =>
+            this.setState(state => {
+              const snapshotData = snapshot.doc.data();
+              if (
+                snapshotData.from !== authstate.uid &&
+                !(snapshotData.from in state.users)
+              ) {
+                this.handleNewUser(snapshotData.from);
+              }
+              return {
+                data:
+                  snapshot.newIndex > 0
                     ? [snapshotData, ...state.data]
-                    : [...state.data, snapshotData];
-                return { data: dataUpdate };
-              });
-          });
+                    : [...state.data, snapshotData]
+              };
+            })
+          );
           this.setState({
             hasMore: Boolean(snapshots.docs.length >= initialSnapshotLimit)
           });
@@ -169,6 +419,12 @@ class Group extends Component {
           callSnackbar(error.message, 'error');
         }
       );
+
+    const token = await api.doGetIdTokenResult();
+
+    if (token.claims.groups[gid] === 'admin') {
+      this.setState({ admin: true });
+    }
   }
 
   fetchOldMessages = async () => {
@@ -308,7 +564,8 @@ class Group extends Component {
       avatars,
       profileIdOpen,
       errorMsg,
-      hasMore
+      hasMore,
+      admin
     } = this.state;
     const {
       authstate,
@@ -334,14 +591,18 @@ class Group extends Component {
             <Description />
           </IconButton>
 
-          <VertDivider />
+          {admin && (
+            <>
+              <VertDivider />
 
-          <IconButton
-            component={Link}
-            to={ROUTES.GROUPS_ID_APPLICATIONS.replace(':gid', gid)}
-          >
-            <FolderShared />
-          </IconButton>
+              <IconButton
+                component={Link}
+                to={ROUTES.GROUPS_ID_APPLICATIONS.replace(':gid', gid)}
+              >
+                <FolderShared />
+              </IconButton>
+            </>
+          )}
         </TopBar>
 
         <MessageContainer>
@@ -413,10 +674,11 @@ class Group extends Component {
       </>
     );
   }
-}
+}*/
 
 Group.propTypes = {
   api: PropTypes.object.isRequired,
+  callSnackbar: PropTypes.func.isRequired,
   authstate: PropTypes.object,
   match: PropTypes.shape({
     params: PropTypes.object.isRequired

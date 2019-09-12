@@ -53,13 +53,6 @@ class BottomNav extends Component {
           value={ROUTES.GROUPS}
           icon={<Group />}
         />
-        <NavAction
-          component={Link}
-          to={ROUTES.SETTINGS}
-          label="My Profile"
-          value={ROUTES.SETTINGS}
-          icon={<AccountBox />}
-        />
       </Nav>
     );
   }

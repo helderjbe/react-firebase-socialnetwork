@@ -21,15 +21,11 @@ const FullScreenCard = styled(Card)(({ theme }) => ({
   }
 }));
 
-const GroupPage = props => {
-  const { authstate } = props;
-
-  return (
-    <FullScreenCard>
-      <Group authstate={authstate} />
-    </FullScreenCard>
-  );
-};
+const GroupPage = ({ authstate }) => (
+  <FullScreenCard>
+    <Group authstate={authstate} />
+  </FullScreenCard>
+);
 
 GroupPage.propTypes = {
   authstate: PropTypes.object.isRequired

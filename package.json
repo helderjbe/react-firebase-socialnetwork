@@ -8,6 +8,7 @@
     "algoliasearch": "^3.34.0",
     "eslint-plugin-prettier": "^3.1.0",
     "fast-deep-equal": "^2.0.1",
+    "fast-sort": "^1.5.6",
     "firebase": "^6.6.0",
     "makecancelable": "^1.1.1",
     "material-ui-chip-input": "^1.0.0",

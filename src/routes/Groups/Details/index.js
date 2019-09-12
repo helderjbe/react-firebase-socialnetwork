@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import * as ROUTES from '../../../constants/routes';
@@ -16,14 +16,29 @@ import { withRouter, Link } from 'react-router-dom';
 
 import ArrowBack from '@material-ui/icons/ArrowBack';
 import Settings from '@material-ui/icons/Settings';
+import { withFirebase } from '../../../components/Firebase';
 
-const GroupDetailsPage = props => {
-  const {
-    authstate,
-    match: {
-      params: { gid }
-    }
-  } = props;
+const GroupDetailsPage = ({
+  authstate,
+  match: {
+    params: { gid }
+  },
+  api
+}) => {
+  const [admin, setAdmin] = useState(false);
+
+  useEffect(() => {
+    const getToken = async () => {
+      const token = await api.doGetIdTokenResult();
+
+      if (token.claims.groups[gid] === 'admin') {
+        setAdmin(true);
+      }
+    };
+
+    getToken();
+  }, [api, gid]);
+
   return (
     <>
       <Box mb={1} display="flex">
@@ -36,13 +51,15 @@ const GroupDetailsPage = props => {
             <ArrowBack />
           </IconButton>
         </Box>
-        <IconButton
-          component={Link}
-          to={ROUTES.GROUPS_ID_EDIT.replace(':gid', gid)}
-          color="primary"
-        >
-          <Settings />
-        </IconButton>
+        {admin && (
+          <IconButton
+            component={Link}
+            to={ROUTES.GROUPS_ID_EDIT.replace(':gid', gid)}
+            color="primary"
+          >
+            <Settings />
+          </IconButton>
+        )}
       </Box>
       <Card>
         <CardContent>
@@ -60,5 +77,5 @@ GroupDetailsPage.propTypes = {
 const condition = authUser => Boolean(authUser);
 
 export default withProtectedRoute(condition)(
-  withEmailVerification(withRouter(GroupDetailsPage))
+  withEmailVerification(withRouter(withFirebase(GroupDetailsPage)))
 );

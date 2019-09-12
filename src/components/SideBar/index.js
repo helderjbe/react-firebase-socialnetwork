@@ -1,35 +1,25 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
 
-import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
-import Typography from '@material-ui/core/Typography';
+import { withEmailVerification, withUserSession } from '../Session';
 
-import StickyBox from 'react-sticky-box';
+import MyGroupsHandler from '../MyGroupsHandler';
+import { Typography, Card, CardContent } from '@material-ui/core';
 
-export default class SideBar extends Component {
-  static propTypes = {};
-
-  render() {
+const SideBar = props => {
+  const { authstate } = props;
+  if (!authstate) {
     return (
-      <StickyBox offsetTop={80} offsetBottom={20}>
-        <Card style={{ marginBottom: '16px' }}>
-          <CardContent color="primary">
-            <Typography paragraph align="center">
-              Yep, I'm here. Sidebar. Login info, admin, members online, tag
-              cloud, etc, mainly etc
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent color="primary">
-            <Typography paragraph align="center">
-              Yep, I'm here. Sidebar. Login info, admin, members online, tag
-              cloud, etc, mainly etc
-            </Typography>
-          </CardContent>
-        </Card>
-      </StickyBox>
+      <Card>
+        <CardContent>
+          <Typography variant="body1" color="textSecondary">
+            Please sign in to check out your groups
+          </Typography>
+        </CardContent>
+      </Card>
     );
+  } else {
+    return <MyGroupsHandler />;
   }
-}
+};
+
+export default withEmailVerification(withUserSession(SideBar));
