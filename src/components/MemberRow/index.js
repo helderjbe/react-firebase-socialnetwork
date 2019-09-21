@@ -23,6 +23,7 @@ import UserProfileModal from '../UserProfileModal';
 import ConfirmAction from '../ConfirmAction';
 
 import defaultAvatar from '../../common/images/defaultAvatar.jpg';
+import { Tooltip } from '@material-ui/core';
 
 const BanButton = withStyles(theme => ({
   root: {
@@ -143,21 +144,25 @@ class MemberRow extends Component {
             />
             {role !== 'admin' && admin && (
               <ListItemSecondaryAction>
-                <IconButton
-                  color="primary"
-                  aria-label="make admin"
-                  onClick={this.handleConfirmActionOpen(true)}
-                >
-                  <MakeAdminAvatar>A</MakeAdminAvatar>
-                </IconButton>
+                <Tooltip title="Make this member an admin (Admin only)">
+                  <IconButton
+                    color="primary"
+                    aria-label="make admin"
+                    onClick={this.handleConfirmActionOpen(true)}
+                  >
+                    <MakeAdminAvatar>A</MakeAdminAvatar>
+                  </IconButton>
+                </Tooltip>
 
-                <BanButton
-                  edge="end"
-                  aria-label="remove"
-                  onClick={this.handleConfirmActionOpen(false)}
-                >
-                  <RemoveCircle />
-                </BanButton>
+                <Tooltip title="Ban this member (Admin only)">
+                  <BanButton
+                    edge="end"
+                    aria-label="remove"
+                    onClick={this.handleConfirmActionOpen(false)}
+                  >
+                    <RemoveCircle />
+                  </BanButton>
+                </Tooltip>
               </ListItemSecondaryAction>
             )}
             {role === 'admin' && (

@@ -82,20 +82,14 @@ class GroupDetails extends Component {
           style={{ width: '100%', height: 'auto' }}
         />
         <Box textAlign="center" mt={1} mb={3}>
-          <Typography variant="h6" component="h1">
-            {title}
-          </Typography>
+          <Typography variant="h6">{title}</Typography>
           <Typography variant="caption">
             Created {moment(createdAt).format('MMMM Do YYYY')}
           </Typography>
         </Box>
         <Box mt={1} mx={2} lineHeight="1.8rem">
           <Chip
-            avatar={
-              <Avatar>
-                <Group />
-              </Avatar>
-            }
+            icon={<Group />}
             size="small"
             label={`${memberCount} ${memberCount !== 1 ? 'members' : 'member'}`}
             color="primary"

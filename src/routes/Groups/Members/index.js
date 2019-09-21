@@ -22,7 +22,13 @@ import ArrowBack from '@material-ui/icons/ArrowBack';
 import Close from '@material-ui/icons/Close';
 
 import MemberRow from '../../../components/MemberRow';
-import { CardContent, Box, withStyles } from '@material-ui/core';
+import {
+  CardContent,
+  Box,
+  withStyles,
+  Tooltip,
+  Typography
+} from '@material-ui/core';
 
 import ConfirmAction from '../../../components/ConfirmAction';
 
@@ -228,20 +234,35 @@ class MembersGroupPage extends Component {
 
     return (
       <>
-        <Box mb={1} display="flex">
-          <Box flexGrow={1}>
-            <IconButton
-              aria-label="back"
-              component={Link}
-              to={ROUTES.GROUPS_ID.replace(':gid', gid)}
-            >
-              <ArrowBack />
-            </IconButton>
-          </Box>
-          <LeaveButton onClick={this.handleLeaveDialog}>
-            <Close />
-          </LeaveButton>
+        <Box mb={1}>
+          <Card>
+            <Box display="flex">
+              <Box flexGrow={1} display="flex" alignItems="center">
+                <Box mr={2}>
+                  <Tooltip title="Back">
+                    <IconButton
+                      aria-label="back"
+                      component={Link}
+                      to={ROUTES.GROUPS_ID.replace(':gid', gid)}
+                    >
+                      <ArrowBack />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+
+                <Typography component="h1" variant="overline" align="center">
+                  Group Members
+                </Typography>
+              </Box>
+              <Tooltip title="Leave this group">
+                <LeaveButton onClick={this.handleLeaveDialog}>
+                  <Close />
+                </LeaveButton>
+              </Tooltip>
+            </Box>
+          </Card>
         </Box>
+
         <Grid
           component={InfiniteScroll}
           container

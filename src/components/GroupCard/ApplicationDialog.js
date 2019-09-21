@@ -44,6 +44,12 @@ class ApplicationDialog extends Component {
 
     await this.setState({ loading: true });
 
+    const applicationDoc = await api.refGroupApplicationById(gid, uid).get();
+    if (applicationDoc.exists) {
+      this.setState({ loading: false });
+      return callSnackbar("You've already applied to this group", 'error');
+    }
+
     try {
       await api.refGroupApplicationById(gid, uid).set({
         application: {

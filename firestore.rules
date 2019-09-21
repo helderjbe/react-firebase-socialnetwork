@@ -1,8 +1,118 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write;
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    function isAuthenticated() {
+      return request.auth.uid != null;
+    }
+
+    function isVerified() {
+      return request.auth.token.email_verified;
+    }
+
+    function hasGroup(gid) {
+      return 'groups' in request.auth.token && gid in request.auth.token.groups;
+    }
+
+    function isNotInGroup(gid) {
+      return !('groups' in request.auth.token) || !(gid in request.auth.token.groups);
+    }
+
+    function isGroupAdmin(gid) {
+      return 'groups' in request.auth.token && request.auth.token.groups[gid] == 'admin';
+    }
+
+    function isNotChanged(field) {
+      return !(field in request.resource.data) || request.resource.data[field] == resource.data[field];
+    }
+
+    function hasCorrectTime(value) {
+      //return value == request.time.toMillis();
+      return value >= request.time.toMillis() - 60 * 1000;
+    }
+
+    function isStringLessThanOrEqual(value, max) {
+      return value is string && value.size() <= max;
+    }
+
+    match /groups/{gid} {
+      allow read: if true;
+
+      allow create: if isAuthenticated() && isVerified() // AUTH
+                    && isStringLessThanOrEqual(request.resource.data.title, 54) // title (required)
+                    && (isNotChanged('details') || isStringLessThanOrEqual(request.resource.data.details, 800)) // details
+                    && (isNotChanged('tags') || request.resource.data.tags.size() <= 10) // tags
+                    && request.resource.data.closed == false // closed (required)
+                    && request.resource.data.founder == request.auth.uid // founder (required)
+                    && hasCorrectTime(request.resource.data.createdAt) // createdAt (required)
+                    && isNotChanged('updatedAt') // updatedAt (not allowed)
+                    && isNotChanged('memberCount'); // memberCount (not allowed)
+
+      allow update: if isAuthenticated() && isVerified() // AUTH
+                    && isStringLessThanOrEqual(request.resource.data.title, 54) // title (required)
+                    && (isNotChanged('details') || isStringLessThanOrEqual(request.resource.data.details, 800)) // details
+                    && (isNotChanged('tags') || request.resource.data.tags.size() <= 10) // tags
+                    && (isNotChanged('questions') || request.resource.data.questions.size() <= 3) // questions
+                    && isNotChanged('founder') // founder (not allowed)
+                    && isNotChanged('createdAt') // createdAt (not allowed)
+                    && isNotChanged('updatedAt') // updatedAt (not allowed)
+                    && isNotChanged('memberCount'); // memberCount (not allowed)
+
+      allow delete: if false
+
+      match /applications/{uid} {
+        allow read: if isAuthenticated() && isVerified()
+                    && (isOwner(uid) || isGroupAdmin(gid));
+
+        allow create: if isAuthenticated() && isVerified()
+                      && isNotInGroup(gid)
+                      && hasCorrectTime(request.resource.data.createdAt); // createdAt (required)
+
+        allow update: if false;
+
+        allow delete: if isAuthenticated() && isVerified()
+                      && isGroupAdmin(gid)
+      }
+
+      match /members/{uid} {
+        allow read: if isAuthenticated() && isVerified()
+                    && hasGroup(gid);
+
+        allow create: if false;
+
+        allow update: if isAuthenticated() && isVerified()
+                      && isGroupAdmin(gid)
+                      && isNotChanged('createdAt'); // createdAt (not allowed)
+
+        allow delete: if isAuthenticated() && isVerified()
+                      && (isGroupAdmin(gid) || isOwner(uid));
+      }
+
+      match /messages/{mid} {
+        allow read: if isAuthenticated() && isVerified()
+                    && hasGroup(gid);
+
+        allow create: if isAuthenticated() && isVerified()
+                      && hasGroup(gid)
+                      && isOwner(request.resource.data.from)
+                      && hasCorrectTime(request.resource.data.createdAt) // createdAt (required)
+                      && (isNotChanged('text') || isStringLessThanOrEqual(request.resource.data.text, 2000)); // text
+        
+        allow update, delete: if false;
+      }
+    }
+
+    match /userClaims/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    match /users/{uid} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isOwner(uid);
     }
   }
 }

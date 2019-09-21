@@ -11,7 +11,7 @@ import {
   withProtectedRoute,
   withEmailVerification
 } from '../../../components/Session';
-import { Box, IconButton } from '@material-ui/core';
+import { Box, IconButton, Tooltip, Typography } from '@material-ui/core';
 import { withRouter, Link } from 'react-router-dom';
 
 import ArrowBack from '@material-ui/icons/ArrowBack';
@@ -40,33 +40,41 @@ const GroupDetailsPage = ({
   }, [api, gid]);
 
   return (
-    <>
-      <Box mb={1} display="flex">
-        <Box flexGrow={1}>
-          <IconButton
-            aria-label="back"
-            component={Link}
-            to={ROUTES.GROUPS_ID.replace(':gid', gid)}
-          >
-            <ArrowBack />
-          </IconButton>
+    <Card>
+      <Box display="flex">
+        <Box flexGrow={1} display="flex" alignItems="center">
+          <Box mr={2}>
+            <Tooltip title="Back">
+              <IconButton
+                aria-label="back"
+                component={Link}
+                to={ROUTES.GROUPS_ID.replace(':gid', gid)}
+              >
+                <ArrowBack />
+              </IconButton>
+            </Tooltip>
+          </Box>
+
+          <Typography component="h1" variant="overline" align="center">
+            Group Details
+          </Typography>
         </Box>
         {admin && (
-          <IconButton
-            component={Link}
-            to={ROUTES.GROUPS_ID_EDIT.replace(':gid', gid)}
-            color="primary"
-          >
-            <Settings />
-          </IconButton>
+          <Tooltip title="Edit group settings (Admin only)">
+            <IconButton
+              component={Link}
+              to={ROUTES.GROUPS_ID_EDIT.replace(':gid', gid)}
+              color="primary"
+            >
+              <Settings />
+            </IconButton>
+          </Tooltip>
         )}
       </Box>
-      <Card>
-        <CardContent>
-          <GroupDetails authstate={authstate} />
-        </CardContent>
-      </Card>
-    </>
+      <CardContent>
+        <GroupDetails authstate={authstate} />
+      </CardContent>
+    </Card>
   );
 };
 

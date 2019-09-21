@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import ReadMoreReact from 'read-more-react';
+
 import { Highlight } from 'react-instantsearch-dom';
 
 import makeCancelable from 'makecancelable';
@@ -29,7 +31,7 @@ import PersonAdd from '@material-ui/icons/PersonAdd';
 import ApplicationDialog from './ApplicationDialog';
 
 import defaultBanner from '../../common/images/defaultBanner.jpg';
-import { CardActionArea } from '@material-ui/core';
+import { CardActionArea, Tooltip } from '@material-ui/core';
 
 const GroupGridListTileBar = withStyles({
   root: {
@@ -70,6 +72,7 @@ class GroupCard extends Component {
     const { authstate, history, api, gid, callSnackbar } = this.props;
 
     if (!authstate) {
+      callSnackbar('Please sign in first to apply to this group', 'warning');
       return history.push(ROUTES.SIGN_IN);
     }
 
@@ -81,7 +84,7 @@ class GroupCard extends Component {
         .map(provider => provider.providerId)
         .includes('password')
     ) {
-      callSnackbar(
+      return callSnackbar(
         'Please validate your e-mail first before applying',
         'error'
       );
@@ -90,9 +93,9 @@ class GroupCard extends Component {
       token.claims.groups &&
       token.claims.groups[gid]
     ) {
-      callSnackbar("You're already a part of this group", 'error');
+      return callSnackbar("You're already a part of this group", 'error');
     } else {
-      this.setState({ applicationDialog: true });
+      return this.setState({ applicationDialog: true });
     }
   };
 
@@ -107,42 +110,41 @@ class GroupCard extends Component {
       api,
       updatedAt,
       createdAt,
+      details,
       questions
     } = this.props;
 
     return (
       <>
-        <CardActionArea onClick={this.handleApplicationDialogOpen}>
-          <GridListTile component="div">
-            <img
-              src={groupImgSrc}
-              alt={`${title} banner`}
-              style={{ width: '100%', height: 'auto' }}
-            />
-            <GroupGridListTileBar
-              title={<Highlight attribute="title" hit={this.props} />}
-              subtitle={
-                updatedAt
-                  ? `Updated ${moment(updatedAt).fromNow()}`
-                  : `Created ${moment(createdAt).fromNow()}`
-              }
-              actionIcon={
-                <Box p={2}>
-                  <PersonAdd color="secondary" />
-                </Box>
-              }
-              titlePosition="top"
-              actionPosition="right"
-            />
-          </GridListTile>
-        </CardActionArea>
+        <Tooltip disableHoverListener title={`Apply to ${title}`}>
+          <CardActionArea onClick={this.handleApplicationDialogOpen}>
+            <GridListTile component="div">
+              <img
+                src={groupImgSrc}
+                alt={`${title} banner`}
+                style={{ width: '100%', height: 'auto' }}
+              />
+              <GroupGridListTileBar
+                title={<Highlight attribute="title" hit={this.props} />}
+                subtitle={
+                  updatedAt
+                    ? `Updated ${moment(updatedAt).fromNow()}`
+                    : `Created ${moment(createdAt).fromNow()}`
+                }
+                actionIcon={
+                  <Box p={2}>
+                    <PersonAdd color="secondary" />
+                  </Box>
+                }
+                titlePosition="top"
+                actionPosition="right"
+              />
+            </GridListTile>
+          </CardActionArea>
+        </Tooltip>
         <Box mt={1} mx={2} lineHeight="1.8rem">
           <Chip
-            avatar={
-              <Avatar>
-                <Group />
-              </Avatar>
-            }
+            icon={<Group />}
             size="small"
             label={`${memberCount ? memberCount : 1} ${
               memberCount !== 1 ? 'members' : 'member'
@@ -163,7 +165,21 @@ class GroupCard extends Component {
             variant="body2"
             style={{ whiteSpace: 'pre-line' }}
           >
-            <Highlight attribute="details" hit={this.props} />
+            <ReadMoreReact
+              text={details || ''}
+              min={160}
+              ideal={230}
+              max={320}
+              readMoreText={
+                <Typography
+                  variant="overline"
+                  color="textSecondary"
+                  style={{ cursor: 'pointer' }}
+                >
+                  Read more ...
+                </Typography>
+              }
+            />
           </Typography>
         </CardContent>
         {authstate && (

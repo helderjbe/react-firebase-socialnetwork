@@ -19,6 +19,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Avatar from '@material-ui/core/Avatar';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { Button } from '@material-ui/core';
+import Tooltip from '@material-ui/core/Tooltip';
 
 import defaultAvatar from '../../common/images/defaultAvatar.jpg';
 
@@ -173,7 +174,9 @@ class Applications extends Component {
         >
           {data.length === 0 && (this.isFetching || !hasMore) && (
             <Box mt={2}>
-              <Typography>No applications received yet</Typography>
+              <Typography align="center" variant="body2" color="textSecondary">
+                No applications received yet
+              </Typography>
             </Box>
           )}
           {data.map((entry, index) => {
@@ -200,11 +203,19 @@ class Applications extends Component {
                       />
                     </Box>
                     <div>
-                      <Typography variant="subtitle1">
-                        {users[entry.uid].name
-                          ? users[entry.uid].name
-                          : 'No Name'}
-                      </Typography>
+                      <Tooltip
+                        title={
+                          users[entry.uid].name
+                            ? users[entry.uid].name
+                            : 'No Name'
+                        }
+                      >
+                        <Typography variant="subtitle1">
+                          {users[entry.uid].name
+                            ? users[entry.uid].name
+                            : 'No Name'}
+                        </Typography>
+                      </Tooltip>
                       <Typography variant="caption">
                         {`${moment(entry.createdAt).fromNow()}`}
                       </Typography>

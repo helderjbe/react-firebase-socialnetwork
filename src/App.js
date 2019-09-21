@@ -61,8 +61,8 @@ const routesList = [
 const App = ({ authstate }) => (
   <Router>
     <NavBar />
-    <MainContainer maxWidth="md">
-      <Grid container spacing={2}>
+    <MainContainer maxWidth={'md'}>
+      <Grid container spacing={2} justify="center">
         <Grid item sm={8} xs={12}>
           <Switch>
             {routesList.map((props, index) => (
@@ -70,13 +70,15 @@ const App = ({ authstate }) => (
             ))}
           </Switch>
         </Grid>
-        <MediaQuerySmUp>
-          <Grid item sm={4}>
-            <StickyBox offsetTop={72} offsetBottom={20}>
-              <SideBar />
-            </StickyBox>
-          </Grid>
-        </MediaQuerySmUp>
+        {authstate && (
+          <MediaQuerySmUp>
+            <Grid item sm={4}>
+              <StickyBox offsetTop={72} offsetBottom={20}>
+                <SideBar />
+              </StickyBox>
+            </Grid>
+          </MediaQuerySmUp>
+        )}
       </Grid>
     </MainContainer>
     <MediaQueryXsDown>

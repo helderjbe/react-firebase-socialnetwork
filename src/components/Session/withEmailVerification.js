@@ -58,6 +58,7 @@ const withEmailVerification = Component => {
                     color="primary"
                     onClick={this.onSendEmailVerification}
                     disabled={isSent || loading}
+                    fullWidth
                   >
                     Send confirmation E-Mail
                   </Button>

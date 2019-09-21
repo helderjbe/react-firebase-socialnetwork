@@ -14,14 +14,17 @@
 4.1 - Set up quotas for firestore
 5 - Firebase production project
 5.1 - Change env variables for production
-
-https://www.algolia.com/doc/guides/going-to-production/implementation-checklist/
+6 - Name
+6.1 - Change name in manifest
+6.2 - Change name in src
+6.3 - Change name in title
+7 - Icons
+7.1 - Change favicons, manifest.json
+7.2 - Add logo instead of name in main page
 
 # TODO
 
-Use react-redux-firebase + redux-firestore?
+Hooks
+Refactor imports
 
-2 - Sidebar navigation
 3 - Add clearData (for users), when users delete an account.
-4 - Make the side menu for desktop
-6 - Form validation

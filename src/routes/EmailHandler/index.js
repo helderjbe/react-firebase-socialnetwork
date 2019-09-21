@@ -37,14 +37,14 @@ class EmailHandlerPage extends Component {
         renderMode = <ResetPassword actionCode={actionCode} />;
         break;
       case 'recoverEmail':
-        renderMode = <VerifyEmail actionCode={actionCode} />;
+        renderMode = <RecoverEmail actionCode={actionCode} />;
         break;
       case 'verifyEmail':
-        renderMode = <RecoverEmail actionCode={actionCode} />;
+        renderMode = <VerifyEmail actionCode={actionCode} />;
         break;
       case '':
         renderMode = (
-          <Typography component="h1" variant="h5" align="center">
+          <Typography component="h1" variant="h5" align="center" gutterBottom>
             Bad Request
           </Typography>
         );

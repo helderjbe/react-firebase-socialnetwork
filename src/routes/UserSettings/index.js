@@ -12,6 +12,7 @@ import Box from '@material-ui/core/Box';
 import UserProfile from '../../components/UserSettings/Profile';
 import UserEmail from '../../components/UserSettings/Email';
 import UserPassword from '../../components/UserSettings/Password';
+import { Typography } from '@material-ui/core';
 
 class UserSettingsPage extends Component {
   state = { editEmailPassword: false };
@@ -31,6 +32,14 @@ class UserSettingsPage extends Component {
     return (
       <Card>
         <CardContent>
+          <Typography
+            component="h1"
+            variant="overline"
+            align="center"
+            gutterBottom
+          >
+            Account Settings
+          </Typography>
           <UserProfile authstate={authstate} />
           {editEmailPassword && (
             <>

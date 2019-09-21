@@ -50,7 +50,7 @@ class RecoverEmail extends Component {
       <>
         {email ? (
           <>
-            <Typography component="h1" variant="h5" align="center">
+            <Typography component="h1" variant="h5" align="center" gutterBottom>
               Recover Account
             </Typography>
             <Typography variant="caption">

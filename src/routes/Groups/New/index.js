@@ -16,8 +16,13 @@ const NewGroupPage = props => {
   return (
     <Card>
       <CardContent>
-        <Typography component="h1" variant="h5" align="center" gutterBottom>
-          Create a Group
+        <Typography
+          component="h1"
+          variant="overline"
+          align="center"
+          gutterBottom
+        >
+          Create a new group
         </Typography>
         <Typography
           component="h2"

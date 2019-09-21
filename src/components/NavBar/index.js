@@ -21,7 +21,7 @@ import Box from '@material-ui/core/Box';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import ExitToApp from '@material-ui/icons/ExitToApp';
 
-import { IconButton } from '@material-ui/core';
+import { IconButton, Tooltip } from '@material-ui/core';
 
 const HideOnScroll = props => {
   const { children } = props;
@@ -67,14 +67,16 @@ class NavBar extends Component {
                 </Typography>
               </Link>
             </Box>
-            <IconButton
-              component={Link}
-              to={authstate ? ROUTES.SETTINGS : ROUTES.SIGN_IN}
-            >
-              <AccountCircle color="secondary" />
-            </IconButton>
+            <Tooltip title="Account settings">
+              <IconButton
+                component={Link}
+                to={authstate ? ROUTES.SETTINGS : ROUTES.SIGN_IN}
+              >
+                <AccountCircle color="secondary" />
+              </IconButton>
+            </Tooltip>
             {authstate && (
-              <>
+              <Tooltip title="Sign out">
                 <IconButton
                   component={Link}
                   to={ROUTES.SIGN_IN}
@@ -82,7 +84,7 @@ class NavBar extends Component {
                 >
                   <ExitToApp color="secondary" />
                 </IconButton>
-              </>
+              </Tooltip>
             )}
           </Toolbar>
         </AppBar>

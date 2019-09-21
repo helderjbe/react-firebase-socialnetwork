@@ -9,7 +9,7 @@ import { withSnackbar } from '../Snackbar';
 
 import InfiniteScroll from 'react-infinite-scroller';
 
-import { withStyles } from '@material-ui/core';
+import { withStyles, Tooltip } from '@material-ui/core';
 import Paper from '@material-ui/core/Paper';
 import InputBase from '@material-ui/core/InputBase';
 import Divider from '@material-ui/core/Divider';
@@ -19,6 +19,7 @@ import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import Avatar from '@material-ui/core/Avatar';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import Typography from '@material-ui/core/Typography';
 
 import Image from '@material-ui/icons/Image';
 import Send from '@material-ui/icons/Send';
@@ -30,6 +31,7 @@ import { styled, useTheme } from '@material-ui/core/styles';
 import UserProfileModal from '../UserProfileModal';
 
 import defaultAvatar from '../../common/images/defaultAvatar.jpg';
+import moment from 'moment';
 
 const InputContainer = withStyles(theme => ({
   root: {
@@ -78,8 +80,15 @@ const MessageContainer = styled('div')({
   overflow: 'auto'
 });
 
-const Message = props => {
-  const { children, left, uid, handleProfileIdOpen, avatarUrl, name } = props;
+const Message = ({
+  children,
+  left,
+  uid,
+  handleProfileIdOpen,
+  avatarUrl,
+  name,
+  createdAt
+}) => {
   const theme = useTheme();
 
   return (
@@ -93,15 +102,17 @@ const Message = props => {
       ) : (
         <Box flexGrow={1} />
       )}
-      <MessageCard
-        style={{
-          backgroundColor: left
-            ? theme.palette.secondary.dark
-            : theme.palette.primary.light
-        }}
-      >
-        <CardContent>{children}</CardContent>
-      </MessageCard>
+      <Tooltip title={moment(createdAt).calendar()}>
+        <MessageCard
+          style={{
+            backgroundColor: left
+              ? theme.palette.secondary.dark
+              : theme.palette.primary.light
+          }}
+        >
+          <CardContent>{children}</CardContent>
+        </MessageCard>
+      </Tooltip>
     </Box>
   );
 };
@@ -124,6 +135,7 @@ const Group = ({
 }) => {
   const initialSnapshotLimit = 20;
 
+  const [name, setName] = useState('Loading name...');
   const [text, setText] = useState('');
   const [file, setFile] = useState(false);
   const [data, setData] = useState([]);
@@ -155,6 +167,23 @@ const Group = ({
   );
 
   useEffect(() => {
+    setName('Loading name...');
+    setData([]);
+    setUsers({});
+    setAvatars({});
+    setHasMore(true);
+    setAdmin(false);
+    setIsFetching(false);
+
+    const fetchGroupName = async () => {
+      const doc = await api.refGroupById(gid).get();
+
+      setName(doc.data().title);
+    };
+    fetchGroupName();
+  }, [api, gid]);
+
+  useEffect(() => {
     const cancelListener = api
       .refGroupMessages(gid)
       .orderBy('createdAt', 'desc')
@@ -169,11 +198,12 @@ const Group = ({
             ) {
               handleNewUser(snapshotData.from);
             }
-            setData(prevData =>
-              snapshot.newIndex > 0
-                ? [snapshotData, ...prevData]
-                : [...prevData, snapshotData]
-            );
+            snapshot.newIndex >= 0 &&
+              setData(prevData =>
+                snapshot.newIndex === 0
+                  ? [...prevData, snapshotData]
+                  : [snapshotData, ...prevData]
+              );
           });
           setHasMore(Boolean(snapshots.docs.length >= initialSnapshotLimit));
         },
@@ -192,7 +222,9 @@ const Group = ({
     checkAdmin();
 
     return cancelListener;
-  }, [api, authstate.uid, callSnackbar, gid, handleNewUser, users]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [api, authstate.uid, callSnackbar, gid, handleNewUser]);
 
   const fetchOldMessages = async () => {
     const snapshotLimit = 20;
@@ -268,30 +300,40 @@ const Group = ({
   return (
     <>
       <TopBar>
-        <Box flexGrow="1" />
-        <IconButton
-          component={Link}
-          to={ROUTES.GROUPS_ID_MEMBERS.replace(':gid', gid)}
-        >
-          <Person />
-        </IconButton>
-        <IconButton
-          component={Link}
-          to={ROUTES.GROUPS_ID_DETAILS.replace(':gid', gid)}
-        >
-          <Description />
-        </IconButton>
+        <Box ml={2} flexGrow="1">
+          <Typography component="h1" variant="overline">
+            {name}
+          </Typography>
+        </Box>
+        <Tooltip title="Members in the group">
+          <IconButton
+            component={Link}
+            to={ROUTES.GROUPS_ID_MEMBERS.replace(':gid', gid)}
+          >
+            <Person />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Group details">
+          <IconButton
+            component={Link}
+            to={ROUTES.GROUPS_ID_DETAILS.replace(':gid', gid)}
+          >
+            <Description />
+          </IconButton>
+        </Tooltip>
 
         {admin && (
           <>
             <VertDivider />
 
-            <IconButton
-              component={Link}
-              to={ROUTES.GROUPS_ID_APPLICATIONS.replace(':gid', gid)}
-            >
-              <FolderShared />
-            </IconButton>
+            <Tooltip title="Applications (Admin only)">
+              <IconButton
+                component={Link}
+                to={ROUTES.GROUPS_ID_APPLICATIONS.replace(':gid', gid)}
+              >
+                <FolderShared />
+              </IconButton>
+            </Tooltip>
           </>
         )}
       </TopBar>
@@ -314,6 +356,7 @@ const Group = ({
           }
         >
           {data.map((messageData, index) => {
+            messageData = messageData || {};
             const left = messageData.from !== authstate.uid;
             const name = users[messageData.from]
               ? users[messageData.from].name
@@ -322,6 +365,7 @@ const Group = ({
               <Message
                 key={`message ${index}`}
                 uid={messageData.from}
+                createdAt={messageData.createdAt}
                 left={left}
                 handleProfileIdOpen={handleProfileIdOpen}
                 name={name}
@@ -346,9 +390,11 @@ const Group = ({
             multiline
             rowsMax="3"
           />
-          <IconButton component="button" type="submit">
-            <Send />
-          </IconButton>
+          <Tooltip title="Send">
+            <IconButton component="button" type="submit">
+              <Send />
+            </IconButton>
+          </Tooltip>
         </InputContainer>
       </form>
       {profileIdOpen && (
@@ -363,318 +409,6 @@ const Group = ({
     </>
   );
 };
-/*
-class Group extends Component {
-  state = {
-    text: '',
-    file: false,
-    data: [],
-    users: {},
-    avatars: {},
-    profileIdOpen: null,
-    hasMore: true,
-    admin: false
-  };
-
-  async componentDidMount() {
-    const initialSnapshotLimit = 20;
-
-    const {
-      api,
-      authstate,
-      match: {
-        params: { gid }
-      },
-      callSnackbar
-    } = this.props;
-
-    this.listener = api
-      .refGroupMessages(gid)
-      .orderBy('createdAt', 'desc')
-      .limit(initialSnapshotLimit)
-      .onSnapshot(
-        snapshots => {
-          snapshots.docChanges().forEach(snapshot =>
-            this.setState(state => {
-              const snapshotData = snapshot.doc.data();
-              if (
-                snapshotData.from !== authstate.uid &&
-                !(snapshotData.from in state.users)
-              ) {
-                this.handleNewUser(snapshotData.from);
-              }
-              return {
-                data:
-                  snapshot.newIndex > 0
-                    ? [snapshotData, ...state.data]
-                    : [...state.data, snapshotData]
-              };
-            })
-          );
-          this.setState({
-            hasMore: Boolean(snapshots.docs.length >= initialSnapshotLimit)
-          });
-        },
-        error => {
-          callSnackbar(error.message, 'error');
-        }
-      );
-
-    const token = await api.doGetIdTokenResult();
-
-    if (token.claims.groups[gid] === 'admin') {
-      this.setState({ admin: true });
-    }
-  }
-
-  fetchOldMessages = async () => {
-    const snapshotLimit = 20;
-
-    const orderBy = 'createdAt';
-
-    const {
-      api,
-      match: {
-        params: { gid }
-      },
-      authstate,
-      callSnackbar
-    } = this.props;
-    const { data, hasMore } = this.state;
-
-    if (!hasMore || this.isFetching) return false;
-    this.isFetching = true;
-
-    try {
-      const snapshots = await api
-        .refGroupMessages(gid)
-        .orderBy(orderBy, 'desc')
-        .startAfter(data[0][orderBy])
-        .limit(snapshotLimit)
-        .get();
-
-      snapshots.docChanges().forEach(snapshot => {
-        this.setState(state => {
-          const snapshotData = snapshot.doc.data();
-          if (
-            snapshotData.from !== authstate.uid &&
-            !(snapshotData.from in state.users)
-          ) {
-            this.handleNewUser(snapshotData.from);
-          }
-
-          return {
-            data: [snapshotData, ...state.data]
-          };
-        });
-      });
-
-      if (snapshots.docs.length < snapshotLimit) {
-        this.setState({ hasMore: false });
-      }
-
-      this.isFetching = false;
-    } catch (error) {
-      callSnackbar(error.message, 'error');
-    }
-  };
-
-  componentWillUnmount() {
-    this.listener();
-  }
-
-  onSubmit = async event => {
-    event.preventDefault();
-    const { text, file } = this.state;
-    const {
-      authstate,
-      api,
-      match: {
-        params: { gid }
-      },
-      callSnackbar
-    } = this.props;
-
-    if (!file && text.trim() === '') {
-      return;
-    }
-
-    try {
-      await api.refGroupMessages(gid).add({
-        from: authstate.uid,
-        createdAt: api.firebase.firestore.Timestamp.now().toMillis(),
-        text,
-        file
-      });
-
-      this.setState({ text: '', file: false });
-    } catch (error) {
-      callSnackbar(error.message, 'error');
-    }
-  };
-
-  handleKeyDown = event => {
-    if (event.keyCode === 13 && !event.shiftKey) {
-      this.onSubmit(event);
-    }
-  };
-
-  handleNewUser = async uid => {
-    const { api, callSnackbar } = this.props;
-
-    try {
-      const doc = await api.refUserById(uid).get();
-      const userData = doc.data();
-
-      if (userData && userData.avatar) {
-        const url = await api.refUserAvatar(uid).getDownloadURL();
-        this.setState(state => ({
-          avatars: { ...state.avatars, [uid]: url }
-        }));
-      } else {
-        this.setState(state => ({
-          avatars: { ...state.avatars, [uid]: '' }
-        }));
-      }
-      this.setState(state => ({
-        users: { ...state.users, [doc.id]: userData }
-      }));
-    } catch (error) {
-      callSnackbar(error.message, 'error');
-    }
-  };
-
-  handleProfileIdOpen = profileIdOpen => () => {
-    this.setState({ profileIdOpen });
-  };
-
-  handleProfileIdClose = () => {
-    this.setState({ profileIdOpen: null });
-  };
-
-  onChange = event => {
-    this.setState({ [event.target.name]: event.target.value });
-  };
-
-  render() {
-    const {
-      text,
-      data,
-      users,
-      avatars,
-      profileIdOpen,
-      errorMsg,
-      hasMore,
-      admin
-    } = this.state;
-    const {
-      authstate,
-      match: {
-        params: { gid }
-      }
-    } = this.props;
-
-    return (
-      <>
-        <TopBar>
-          <Box flexGrow="1" />
-          <IconButton
-            component={Link}
-            to={ROUTES.GROUPS_ID_MEMBERS.replace(':gid', gid)}
-          >
-            <Person />
-          </IconButton>
-          <IconButton
-            component={Link}
-            to={ROUTES.GROUPS_ID_DETAILS.replace(':gid', gid)}
-          >
-            <Description />
-          </IconButton>
-
-          {admin && (
-            <>
-              <VertDivider />
-
-              <IconButton
-                component={Link}
-                to={ROUTES.GROUPS_ID_APPLICATIONS.replace(':gid', gid)}
-              >
-                <FolderShared />
-              </IconButton>
-            </>
-          )}
-        </TopBar>
-
-        <MessageContainer>
-          <InfiniteScroll
-            style={{
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-            initialLoad={false}
-            isReverse={true}
-            loadMore={this.fetchOldMessages}
-            hasMore={hasMore}
-            useWindow={false}
-            loader={
-              <Box width="100%" textAlign="center" my={2} key={0}>
-                <CircularProgress />
-              </Box>
-            }
-          >
-            {data.map((messageData, index) => {
-              const left = messageData.from !== authstate.uid;
-              const name = users[messageData.from]
-                ? users[messageData.from].name
-                : '';
-              return (
-                <Message
-                  key={`message ${index}`}
-                  uid={messageData.from}
-                  left={left}
-                  handleProfileIdOpen={this.handleProfileIdOpen}
-                  name={name}
-                  avatarUrl={avatars[messageData.from]}
-                >
-                  {messageData.text}
-                </Message>
-              );
-            })}
-          </InfiniteScroll>
-        </MessageContainer>
-
-        {errorMsg !== '' && errorMsg}
-
-        <form onSubmit={this.onSubmit}>
-          <InputContainer>
-            <MessageInput
-              onKeyDown={this.handleKeyDown}
-              value={text}
-              onChange={this.onChange}
-              name="text"
-              placeholder="Type something"
-              inputProps={{ 'aria-label': 'input message' }}
-              multiline
-              rowsMax="3"
-            />
-            <IconButton component="button" type="submit">
-              <Send />
-            </IconButton>
-          </InputContainer>
-        </form>
-        {profileIdOpen && (
-          <UserProfileModal
-            handleClose={this.handleProfileIdClose}
-            open={Boolean(profileIdOpen)}
-            avatarUrl={avatars[profileIdOpen]}
-            name={users[profileIdOpen] && users[profileIdOpen].name}
-            about={users[profileIdOpen] && users[profileIdOpen].about}
-          />
-        )}
-      </>
-    );
-  }
-}*/
 
 Group.propTypes = {
   api: PropTypes.object.isRequired,

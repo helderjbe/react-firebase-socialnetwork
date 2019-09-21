@@ -1,13 +1,17 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 
 import { Link } from 'react-router-dom';
 import * as ROUTES from '../../constants/routes';
 
+import algoliasearch from 'algoliasearch/lite';
 import {
+  InstantSearch,
+  Configure,
   connectInfiniteHits,
   connectStateResults
 } from 'react-instantsearch-dom';
+import { ENV_PREFIX, SEARCH_CONFIG } from '../../config';
 
 import InfiniteScroll from 'react-infinite-scroller';
 
@@ -49,53 +53,64 @@ const NoResultsCard = connectStateResults(
     )
 );
 
-class HomePage extends Component {
-  onSentinelIntersection = async () => {
-    const { callSnackbar, hasMore, refine } = this.props;
+const HomePage = ({ callSnackbar, hasMore, refine, hits }) => {
+  let isFetching = false;
 
-    if (!hasMore || this.isFetching) return false;
-    this.isFetching = true;
+  const onSentinelIntersection = async () => {
+    if (!hasMore || isFetching) return false;
+    isFetching = true;
 
     try {
       await refine();
-      this.isFetching = false;
+      isFetching = false;
     } catch (error) {
       callSnackbar(error.message, 'error');
     }
   };
 
-  render() {
-    const { hits, hasMore } = this.props;
-    return (
-      <Grid
-        component={InfiniteScroll}
-        container
-        spacing={2}
-        initialLoad={false}
-        loadMore={this.onSentinelIntersection}
-        hasMore={hasMore}
-        loader={
-          <Box width="100%" textAlign="center" my={2} key={0}>
-            <CircularProgress />
-          </Box>
-        }
-      >
-        <SearchContent />
-        <NoResultsCard show={!hits.length} />
-        {hits.map(hit => (
-          <Grid item xs={12} key={hit.objectID}>
-            <Card>
-              <GroupCard {...hit} gid={hit.objectID} />
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    );
-  }
-}
+  return (
+    <Grid
+      component={InfiniteScroll}
+      container
+      spacing={2}
+      initialLoad={false}
+      loadMore={onSentinelIntersection}
+      hasMore={hasMore}
+      loader={
+        <Box width="100%" textAlign="center" my={2} key={0}>
+          <CircularProgress />
+        </Box>
+      }
+    >
+      <SearchContent />
+      <NoResultsCard show={!hits.length} />
+      {hits.map(hit => (
+        <Grid item xs={12} key={hit.objectID}>
+          <Card>
+            <GroupCard {...hit} gid={hit.objectID} />
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  );
+};
 
 HomePage.propTypes = {
   hits: PropTypes.array.isRequired
 };
 
-export default withFirebase(withSnackbar(connectInfiniteHits(HomePage)));
+const HomePageConnectors = withFirebase(
+  withSnackbar(connectInfiniteHits(HomePage))
+);
+
+const HomePageWrapper = () => (
+  <InstantSearch
+    indexName={ENV_PREFIX + process.env.REACT_APP_ALGOLIA_INDEX_NAME}
+    searchClient={algoliasearch(SEARCH_CONFIG.appId, SEARCH_CONFIG.searchKey)}
+  >
+    <HomePageConnectors />
+    <Configure hitsPerPage={9} />
+  </InstantSearch>
+);
+
+export default HomePageWrapper;

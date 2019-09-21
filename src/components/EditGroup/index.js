@@ -369,6 +369,7 @@ class EditGroup extends Component {
           fullWidth
           label="Details"
           name="details"
+          inputProps={{ maxLength: '800' }}
           placeholder={
             "Looking for 4 members to keep each other accountable.\nFreelancers preferrable.\nJoin if you're also struggling to advance your career.\n\n..."
           }

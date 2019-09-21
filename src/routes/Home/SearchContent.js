@@ -28,7 +28,13 @@ import Search from '@material-ui/icons/Search';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import GroupAdd from '@material-ui/icons/GroupAdd';
-import { CardContent, Divider, Box, Typography } from '@material-ui/core';
+import {
+  CardContent,
+  Divider,
+  Box,
+  Typography,
+  Tooltip
+} from '@material-ui/core';
 
 const SearchIcon = styled('div')(({ theme }) => ({
   width: theme.spacing(7),
@@ -221,8 +227,7 @@ const Tags = connectRefinementList(
 );
 
 Tags.propTypes = {
-  refine: PropTypes.func,
-  currentRefinement: PropTypes.string
+  refine: PropTypes.func
 };
 
 const SearchContent = () => {
@@ -241,9 +246,11 @@ const SearchContent = () => {
               <LoadingIndicator />
             </SearchIcon>
             <SearchInput />
-            <IconButton component={Link} to={ROUTES.GROUPS_NEW}>
-              <GroupAdd color="inherit" />
-            </IconButton>
+            <Tooltip title="Create a new group">
+              <IconButton component={Link} to={ROUTES.GROUPS_NEW}>
+                <GroupAdd color="inherit" />
+              </IconButton>
+            </Tooltip>
             <IconButton
               onClick={handleExpandClick}
               aria-expanded={expanded}

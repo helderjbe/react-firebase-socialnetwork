@@ -13,7 +13,7 @@ import Box from '@material-ui/core/Box';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
 import GroupRow from '../../components/GroupRow';
-import { CardContent } from '@material-ui/core';
+import { CardContent, Typography } from '@material-ui/core';
 import { withFirebase } from '../Firebase';
 
 class MyGroupsHandler extends Component {
@@ -21,15 +21,16 @@ class MyGroupsHandler extends Component {
 
   componentDidMount() {
     const { api, callSnackbar } = this.props;
-    console.log(api);
+    const self = this;
 
     this.cancelGetGroups = {};
     this.cancelGetGroupMessages = {};
 
     this.cancelGetIdToken = makeCancelable(
       api.doGetIdTokenResult(),
-      token =>
-        Object.keys(token.claims.groups).forEach(
+      token => {
+        self.tokenGroups = token.claims.groups;
+        Object.keys(self.tokenGroups || {}).forEach(
           (gid, index) =>
             (this.cancelGetGroups[index] = makeCancelable(
               api.refGroupById(gid).get(),
@@ -44,7 +45,8 @@ class MyGroupsHandler extends Component {
               },
               error => callSnackbar(error.message, 'error')
             ))
-        ),
+        );
+      },
       error => callSnackbar(error.message, 'error')
     );
   }
@@ -79,7 +81,8 @@ class MyGroupsHandler extends Component {
         .limit(1)
         .get(),
       async snapshots => {
-        const messageData = snapshots.docs[0] ? snapshots.docs[0].data() : {};
+        const messageData =
+          (snapshots.docs[0] && snapshots.docs[0].data()) || {};
 
         await this.setState(state => {
           // data
@@ -105,7 +108,6 @@ class MyGroupsHandler extends Component {
           }
 
           if (sortedData) {
-            if (!self.loaded) self.loaded = true;
             return { data, sortedData };
           } else {
             return { data };
@@ -123,20 +125,29 @@ class MyGroupsHandler extends Component {
 
     return (
       <Grid container spacing={1}>
-        {!this.loaded && (
+        {Object.keys(this.tokenGroups || {}).length !== sortedData.length && (
           <Grid item xs={12}>
             <Box width="100%" textAlign="center" my={2}>
               <CircularProgress />
             </Box>
           </Grid>
         )}
-        {sortedData && sortedData.length === 0 && this.loaded && (
-          <Grid item xs={12}>
-            <Card>
-              <CardContent>No groups under your belt yet</CardContent>
-            </Card>
-          </Grid>
-        )}
+        {Object.keys(this.tokenGroups || {}).length === 0 &&
+          sortedData.length === 0 && (
+            <Grid item xs={12}>
+              <Card>
+                <CardContent>
+                  <Typography
+                    align="center"
+                    variant="body2"
+                    color="textSecondary"
+                  >
+                    No groups under your belt yet
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          )}
         {sortedData.map((entry, index) => (
           <Grid item xs={12} key={`grouprow ${index}`}>
             <GroupRow {...data[entry.gid]} gid={entry.gid} />
