@@ -17,6 +17,7 @@ import LinearProgress from '@material-ui/core/LinearProgress';
 class NewGroup extends Component {
   state = {
     title: '',
+    memberLimit: 2,
     tags: [],
     loading: false
   };
@@ -24,7 +25,7 @@ class NewGroup extends Component {
   onSubmit = async event => {
     event.preventDefault();
 
-    const { title, tags } = this.state;
+    const { title, memberLimit, tags } = this.state;
     const { api, authstate, history, callSnackbar } = this.props;
 
     this.setState({ loading: true });
@@ -33,7 +34,7 @@ class NewGroup extends Component {
       const doc = await api.refGroups().add({
         title,
         tags,
-        closed: false,
+        memberLimit,
         founder: authstate.uid,
         createdAt: api.firebase.firestore.Timestamp.now().toMillis()
       });
@@ -75,7 +76,7 @@ class NewGroup extends Component {
   };
 
   render() {
-    const { title, tags, loading } = this.state;
+    const { title, memberLimit, tags, loading } = this.state;
 
     const isInvalid = title.length < 6 || loading;
 
@@ -92,6 +93,22 @@ class NewGroup extends Component {
           value={title}
           inputProps={{ maxLength: '54' }}
           onChange={this.onChange}
+        />
+        <TextField
+          type="number"
+          variant="outlined"
+          margin="normal"
+          fullWidth
+          label="Member limit"
+          name="memberLimit"
+          required
+          value={memberLimit}
+          onChange={this.onChange}
+          helperText="You cannot change this later"
+          inputProps={{
+            min: 2,
+            max: 50
+          }}
         />
         <ChipInput
           fullWidth

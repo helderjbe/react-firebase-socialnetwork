@@ -22,7 +22,7 @@ class GroupDetails extends Component {
     title: 'Group title',
     details: '',
     memberCount: 0,
-    closed: false,
+    memberLimit: 2,
     tags: [],
     bannerSrc: defaultBanner
   };
@@ -68,7 +68,7 @@ class GroupDetails extends Component {
       title,
       details,
       memberCount,
-      closed,
+      memberLimit,
       tags,
       bannerSrc,
       createdAt
@@ -91,7 +91,7 @@ class GroupDetails extends Component {
           <Chip
             icon={<Group />}
             size="small"
-            label={`${memberCount} ${memberCount !== 1 ? 'members' : 'member'}`}
+            label={`${memberCount} / ${memberLimit} members`}
             color="primary"
           />{' '}
           {tags &&
@@ -102,11 +102,6 @@ class GroupDetails extends Component {
             ))}
         </Box>
         <CardContent>
-          {closed && (
-            <Typography color="textSecondary" paragraph variant="body1">
-              Closed to new applications
-            </Typography>
-          )}
           <Typography
             paragraph
             align="justify"

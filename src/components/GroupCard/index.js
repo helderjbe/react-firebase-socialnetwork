@@ -104,6 +104,7 @@ class GroupCard extends Component {
     const {
       title,
       memberCount,
+      memberLimit,
       tags,
       gid,
       authstate,
@@ -146,9 +147,7 @@ class GroupCard extends Component {
           <Chip
             icon={<Group />}
             size="small"
-            label={`${memberCount ? memberCount : 1} ${
-              memberCount !== 1 ? 'members' : 'member'
-            }`}
+            label={`${memberCount} / ${memberLimit} members`}
             color="primary"
           />{' '}
           {tags &&
@@ -160,6 +159,7 @@ class GroupCard extends Component {
         </Box>
         <CardContent>
           <Typography
+            component="div"
             paragraph
             align="justify"
             variant="body2"
@@ -172,6 +172,7 @@ class GroupCard extends Component {
               max={320}
               readMoreText={
                 <Typography
+                  component="span"
                   variant="overline"
                   color="textSecondary"
                   style={{ cursor: 'pointer' }}
@@ -207,8 +208,8 @@ GroupCard.propTypes = {
   title: PropTypes.string.isRequired,
   banner: PropTypes.bool,
   details: PropTypes.string,
-  closed: PropTypes.bool,
   memberCount: PropTypes.number,
+  memberLimit: PropTypes.number,
   tags: PropTypes.arrayOf(PropTypes.string),
   createdAt: PropTypes.number.isRequired,
   updatedAt: PropTypes.number

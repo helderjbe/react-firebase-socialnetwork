@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import { Link } from 'react-router-dom';
@@ -6,9 +6,10 @@ import { Link } from 'react-router-dom';
 import { withUserSession } from '../Session';
 import { withFirebase } from '../Firebase';
 import { withSnackbar } from '../Snackbar';
+import { withNotifications } from '../Notifications';
 import * as ROUTES from '../../constants/routes';
 
-import { useTheme } from '@material-ui/core/styles';
+import { useTheme, withStyles } from '@material-ui/core/styles';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 
 import AppBar from '@material-ui/core/AppBar';
@@ -20,8 +21,11 @@ import Box from '@material-ui/core/Box';
 
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import ExitToApp from '@material-ui/icons/ExitToApp';
+import Notifications from '@material-ui/icons/Notifications';
 
-import { IconButton, Tooltip } from '@material-ui/core';
+import { IconButton, Tooltip, Badge } from '@material-ui/core';
+
+import NotificationPopper from './NotificationPopper';
 
 const HideOnScroll = props => {
   const { children } = props;
@@ -44,20 +48,68 @@ HideOnScroll.propTypes = {
   children: PropTypes.node.isRequired
 };
 
-class NavBar extends Component {
-  handleSignOut = async () => {
-    const { api, callSnackbar } = this.props;
+const NotificationBadge = withStyles(theme => ({
+  badge: {
+    backgroundColor: theme.palette.primary.dark,
+    boxShadow: `0 0 0 2px ${theme.palette.primary.dark}`,
+    '&::after': {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      borderRadius: '50%',
+      animation: '$ripple 1.2s infinite ease-in-out',
+      border: '1px solid' + theme.palette.primary.light,
+      content: '""'
+    }
+  },
+  '@keyframes ripple': {
+    '0%': {
+      transform: 'scale(.8)',
+      opacity: 1
+    },
+    '100%': {
+      transform: 'scale(2.4)',
+      opacity: 0
+    }
+  }
+}))(Badge);
 
+const NavBar = props => {
+  const { api, callSnackbar, authstate, notifications } = props;
+
+  const [lastNotificationsRead, setLastNotificationsRead] = useState(
+    localStorage.getItem('lastNotificationsRead')
+  );
+  const [latestNotification, setLatestNotification] = useState({});
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  useEffect(() => {
+    if (notifications.length) {
+      setLatestNotification(notifications[0]);
+    }
+  }, [notifications, notifications.docs]);
+
+  const handleSignOut = async () => {
     await api.doSignOut();
 
     callSnackbar('You have signed out', 'warning');
   };
 
-  render() {
-    const { authstate } = this.props;
+  const handleLastNotificationsRead = () => {
+    const now = new Date().getTime();
+    localStorage.setItem('lastNotificationsRead', now);
+    setLastNotificationsRead(now);
+  };
 
-    return (
-      <HideOnScroll {...this.props}>
+  const toggleAnchorEl = event => {
+    setAnchorEl(prevAnchorEl => (prevAnchorEl ? null : event.currentTarget));
+  };
+
+  return (
+    <>
+      <HideOnScroll {...props}>
         <AppBar position="sticky">
           <Toolbar>
             <Box mr="auto">
@@ -76,25 +128,49 @@ class NavBar extends Component {
               </IconButton>
             </Tooltip>
             {authstate && (
-              <Tooltip title="Sign out">
-                <IconButton
-                  component={Link}
-                  to={ROUTES.SIGN_IN}
-                  onClick={this.handleSignOut}
-                >
-                  <ExitToApp color="secondary" />
-                </IconButton>
-              </Tooltip>
+              <>
+                <Tooltip title="Notifications">
+                  <IconButton
+                    onClick={event => {
+                      toggleAnchorEl(event);
+                      handleLastNotificationsRead();
+                    }}
+                  >
+                    <NotificationBadge
+                      variant="dot"
+                      invisible={
+                        !latestNotification.createdAt ||
+                        latestNotification.createdAt <= lastNotificationsRead
+                      }
+                    >
+                      <Notifications color="secondary" />
+                    </NotificationBadge>
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip title="Sign out">
+                  <IconButton
+                    component={Link}
+                    to={ROUTES.SIGN_IN}
+                    onClick={handleSignOut}
+                  >
+                    <ExitToApp color="secondary" />
+                  </IconButton>
+                </Tooltip>
+              </>
             )}
           </Toolbar>
         </AppBar>
       </HideOnScroll>
-    );
-  }
-}
+      <NotificationPopper anchorEl={anchorEl} handleClose={toggleAnchorEl} />
+    </>
+  );
+};
 
 NavBar.propTypes = {
   authstate: PropTypes.object
 };
 
-export default withFirebase(withUserSession(withSnackbar(NavBar)));
+export default withFirebase(
+  withUserSession(withNotifications(withSnackbar(NavBar)))
+);

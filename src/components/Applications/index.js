@@ -126,6 +126,14 @@ class Applications extends Component {
 
     try {
       if (accepted) {
+        const groupDoc = await api.refGroupById(gid).get();
+        const groupData = groupDoc.data();
+
+        if (groupData.memberCount >= groupData.memberLimit) {
+          this.setState({ loading: false });
+          return callSnackbar('Cannot accept member, group is full', 'error');
+        }
+
         await api.refGroupApplicationById(gid, uid).update({ accepted: true });
       }
 
@@ -175,7 +183,7 @@ class Applications extends Component {
           {data.length === 0 && (this.isFetching || !hasMore) && (
             <Box mt={2}>
               <Typography align="center" variant="body2" color="textSecondary">
-                No applications received yet
+                No applications to show
               </Typography>
             </Box>
           )}

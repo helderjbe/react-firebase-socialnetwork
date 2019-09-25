@@ -80,6 +80,14 @@ const MessageContainer = styled('div')({
   overflow: 'auto'
 });
 
+const GroupName = withStyles(() => ({
+  root: {
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis'
+  }
+}))(Typography);
+
 const Message = ({
   children,
   left,
@@ -300,10 +308,10 @@ const Group = ({
   return (
     <>
       <TopBar>
-        <Box ml={2} flexGrow="1">
-          <Typography component="h1" variant="overline">
+        <Box ml={2} flexGrow="1" minWidth={0}>
+          <GroupName component="h1" variant="overline">
             {name}
-          </Typography>
+          </GroupName>
         </Box>
         <Tooltip title="Members in the group">
           <IconButton

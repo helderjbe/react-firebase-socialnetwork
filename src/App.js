@@ -4,6 +4,8 @@ import PropTypes from 'prop-types';
 import StickyBox from 'react-sticky-box';
 
 import withAuthState, { withUserSession } from './components/Session';
+import withNotificationsState from './components/Notifications';
+
 import withSnackbarProvider from './components/Snackbar';
 
 import { MediaQueryXsDown, MediaQuerySmUp } from './aux/mediaQueries';
@@ -95,4 +97,6 @@ App.propTypes = {
   authstate: PropTypes.object
 };
 
-export default withAuthState(withUserSession(withSnackbarProvider(App)));
+export default withAuthState(
+  withUserSession(withNotificationsState(withSnackbarProvider(App)))
+);

@@ -259,6 +259,7 @@ class UserProfile extends Component {
           value={name}
           onChange={this.onChange}
           placeholder="John Smith"
+          inputProps={{ maxLength: '24' }}
         />
         <TextField
           variant="outlined"
@@ -271,6 +272,7 @@ class UserProfile extends Component {
           label="About Me"
           name="about"
           value={about}
+          inputProps={{ maxLength: '2000' }}
           placeholder={
             'From London.\n\nMy hobbies include traveling, reading, hiking.\n\nFacebook: johnsmith, Instagram: @johnsmith'
           }

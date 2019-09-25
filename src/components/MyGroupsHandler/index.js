@@ -81,8 +81,10 @@ class MyGroupsHandler extends Component {
         .limit(1)
         .get(),
       async snapshots => {
-        const messageData =
-          (snapshots.docs[0] && snapshots.docs[0].data()) || {};
+        let messageData = {};
+        if (snapshots.docs[0]) {
+          messageData = snapshots.docs[0].data();
+        }
 
         await this.setState(state => {
           // data

@@ -63,14 +63,11 @@ exports.onWriteGroup = functions.firestore
     // Saving logic
     if (
       (triggerType === 'update' || triggerType === 'create') &&
-      !data.closed
+      data.memberCount < data.memberLimit
     ) {
       // Cater data for saving
       if ('founder' in data) {
         delete data.founder;
-      }
-      if ('closed' in data) {
-        delete data.closed;
       }
       data.objectID = gid;
 
@@ -182,6 +179,35 @@ exports.onCreateGroupMember = functions.firestore
 
 /* Applications */
 
+exports.onCreateApplication = functions.firestore
+  .document('groups/{gid}/applications/{uid}')
+  .onCreate(async (snap, context) => {
+    //const data = snap.data();
+    const gid = context.params.gid;
+    const uid = context.params.uid;
+
+    const snapshots = await firestore
+      .collection('groups')
+      .doc(gid)
+      .collection('members')
+      .where('role', '==', 'admin')
+      .limit(15)
+      .get();
+
+    return snapshots.docs.forEach(snapshot => {
+      firestore
+        .collection('users')
+        .doc(snapshot.id)
+        .collection('notifications')
+        .add({
+          createdAt: Timestamp.now().toMillis(),
+          type: 'application',
+          uid,
+          gid
+        });
+    });
+  });
+
 exports.onDeleteApplication = functions.firestore
   .document('groups/{gid}/applications/{uid}')
   .onDelete((snap, context) => {
@@ -196,7 +222,7 @@ exports.onDeleteApplication = functions.firestore
     }
 
     // add member to group in firestore
-    return firestore
+    firestore
       .collection('groups')
       .doc(gid)
       .collection('members')
@@ -208,6 +234,17 @@ exports.onDeleteApplication = functions.firestore
         },
         { merge: true }
       );
+
+    // notify user of application accepted
+    return firestore
+      .collection('users')
+      .doc(uid)
+      .collection('notifications')
+      .add({
+        createdAt: Timestamp.now().toMillis(),
+        type: 'accepted',
+        gid
+      });
   });
 
 /** Helper functions **/

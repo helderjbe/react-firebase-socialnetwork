@@ -54,7 +54,6 @@ class EditGroup extends Component {
     title: '',
     details: '',
     questions: ['', '', ''],
-    closed: false,
     tags: [],
 
     imageSrc: null,
@@ -111,7 +110,6 @@ class EditGroup extends Component {
       banner,
       title,
       details,
-      closed,
       tags,
       questions,
       croppedImage,
@@ -141,7 +139,6 @@ class EditGroup extends Component {
           banner: banner || !!imageSrc,
           title,
           details,
-          closed,
           tags,
           questions
         });
@@ -245,7 +242,6 @@ class EditGroup extends Component {
     const {
       title,
       details,
-      closed,
       tags,
       questions,
       zoom,
@@ -413,28 +409,6 @@ class EditGroup extends Component {
           name="questions2"
           value={questions[2]}
           onChange={this.onChangeQuestions}
-        />
-        <Box mt={3} mb={2}>
-          <Divider variant="middle" />
-        </Box>
-        <FormControlLabel
-          control={
-            <Checkbox
-              name="closed"
-              checked={closed}
-              onChange={this.onChangeCheckbox}
-              color="default"
-            />
-          }
-          label={
-            <>
-              Close group to new applications
-              <br />
-              <Typography variant="caption" paragraph color="textSecondary">
-                Also unlists the group from the home page
-              </Typography>
-            </>
-          }
         />
         <Button
           type="submit"

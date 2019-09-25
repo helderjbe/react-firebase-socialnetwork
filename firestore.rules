@@ -43,22 +43,23 @@ service cloud.firestore {
 
       allow create: if isAuthenticated() && isVerified() // AUTH
                     && isStringLessThanOrEqual(request.resource.data.title, 54) // title (required)
-                    && (isNotChanged('details') || isStringLessThanOrEqual(request.resource.data.details, 800)) // details
+                    && int(request.resource.data.memberLimit) >= 2 && int(request.resource.data.memberLimit) <= 50 // memberLimit (required)
                     && (isNotChanged('tags') || request.resource.data.tags.size() <= 10) // tags
-                    && request.resource.data.closed == false // closed (required)
                     && request.resource.data.founder == request.auth.uid // founder (required)
                     && hasCorrectTime(request.resource.data.createdAt) // createdAt (required)
+                    && (isNotChanged('details') || isStringLessThanOrEqual(request.resource.data.details, 800)) // details
                     && isNotChanged('updatedAt') // updatedAt (not allowed)
                     && isNotChanged('memberCount'); // memberCount (not allowed)
 
       allow update: if isAuthenticated() && isVerified() // AUTH
                     && isStringLessThanOrEqual(request.resource.data.title, 54) // title (required)
-                    && (isNotChanged('details') || isStringLessThanOrEqual(request.resource.data.details, 800)) // details
                     && (isNotChanged('tags') || request.resource.data.tags.size() <= 10) // tags
+                    && (isNotChanged('details') || isStringLessThanOrEqual(request.resource.data.details, 800)) // details
                     && (isNotChanged('questions') || request.resource.data.questions.size() <= 3) // questions
                     && isNotChanged('founder') // founder (not allowed)
                     && isNotChanged('createdAt') // createdAt (not allowed)
                     && isNotChanged('updatedAt') // updatedAt (not allowed)
+                    && isNotChanged('memberLimit') // memberLimit (not allowed)
                     && isNotChanged('memberCount'); // memberCount (not allowed)
 
       allow delete: if false
@@ -71,10 +72,13 @@ service cloud.firestore {
                       && isNotInGroup(gid)
                       && hasCorrectTime(request.resource.data.createdAt); // createdAt (required)
 
-        allow update: if false;
+        // update to accept
+        allow update: if isAuthenticated() && isVerified()
+                      && isGroupAdmin(gid)
+                      && get(/databases/$(database)/documents/groups/$(gid)).data.memberCount < get(/databases/$(database)/documents/groups/$(gid)).data.memberLimit;
 
         allow delete: if isAuthenticated() && isVerified()
-                      && isGroupAdmin(gid)
+                      && isGroupAdmin(gid);
       }
 
       match /members/{uid} {
@@ -112,7 +116,16 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && isOwner(uid);
+      allow write: if isAuthenticated() && isOwner(uid)
+                   && (isNotChanged('name') || isStringLessThanOrEqual(request.resource.data.name, 24)) // name
+                   && (isNotChanged('about') || isStringLessThanOrEqual(request.resource.data.about, 2000)); // text
+
+      match /notifications/{nid} {
+        allow read: if isAuthenticated()
+                    && isOwner(uid);
+                    
+        allow write: if false;
+      }
     }
   }
 }

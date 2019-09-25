@@ -36,6 +36,8 @@ import {
   Tooltip
 } from '@material-ui/core';
 
+import algoliaLogo from './algolia-logo.svg';
+
 const SearchIcon = styled('div')(({ theme }) => ({
   width: theme.spacing(7),
   height: '100%',
@@ -267,17 +269,36 @@ const SearchContent = () => {
         in={expanded}
         timeout="auto"
         style={{ width: '100%' }}
+        unmountOnExit
       >
         <Card>
           <CardContent>
             <Typography variant="body2">Filter by tags</Typography>
-            <Tags attribute="tags" operator="or" limit={6} searchable />
+            <Tags attribute="tags" operator="and" limit={6} searchable />
             <Box mt={3} mb={2}>
               <Divider variant="middle" />
             </Box>
             <Typography variant="body2">Filter by members</Typography>
             <MemberCountSlider attribute="memberCount" />
           </CardContent>
+          <Box mx={1} my={1}>
+            <a
+              href="https://www.algolia.com/"
+              rel="noopener noreferrer nofollow"
+              target="_blank"
+            >
+              <img
+                src={algoliaLogo}
+                style={{
+                  maxWidth: '96px',
+                  height: 'auto',
+                  marginLeft: 'auto',
+                  display: 'block'
+                }}
+                alt="Search by algolia"
+              />
+            </a>
+          </Box>
         </Card>
       </Collapse>
     </>

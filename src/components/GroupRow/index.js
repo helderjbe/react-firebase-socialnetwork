@@ -93,7 +93,6 @@ class GroupRow extends Component {
 GroupRow.propTypes = {
   api: PropTypes.object.isRequired,
   gid: PropTypes.string.isRequired,
-  closed: PropTypes.bool,
   memberCount: PropTypes.number.isRequired,
   title: PropTypes.string.isRequired,
   banner: PropTypes.bool,

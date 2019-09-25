@@ -44,6 +44,10 @@ export default class Firebase {
 
   refUserById = uid => this.refUsers().doc(uid);
 
+  // User Notifications
+  refUserNotifications = uid =>
+    this.refUserById(uid).collection('notifications');
+
   // User Claims
   refUserClaims = () => this.firestore.collection('userClaims');
 
