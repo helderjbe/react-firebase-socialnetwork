@@ -8,7 +8,7 @@ import CardContent from '@material-ui/core/CardContent';
 import Container from '@material-ui/core/Container';
 import Avatar from '@material-ui/core/Avatar';
 import Lock from '@material-ui/icons/Lock';
-import Typography from '@material-ui/core/Typography';
+import Divider from '@material-ui/core/Divider';
 import TextLink from '@material-ui/core/Link';
 import Box from '@material-ui/core/Box';
 import Grid from '@material-ui/core/Grid';
@@ -19,12 +19,6 @@ const SignInPage = () => (
   <Container maxWidth="xs" style={{ padding: 0 }}>
     <Card>
       <CardContent>
-        <Avatar style={{ margin: '0 auto 8px auto' }}>
-          <Lock />
-        </Avatar>
-        <Typography component="h1" variant="h5" align="center">
-          Sign in
-        </Typography>
         <SignIn />
         <Box mt={1}>
           <Grid

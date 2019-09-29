@@ -38,7 +38,7 @@ class BottomNav extends Component {
     const { menuValue } = this.state;
 
     return (
-      <Nav value={menuValue} onChange={this.handleChange}>
+      <Nav value={menuValue} onChange={this.handleChange} showLabels>
         <NavAction
           component={Link}
           to={ROUTES.HOME}

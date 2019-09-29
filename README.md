@@ -3,13 +3,11 @@
 1 - Firebase Public Settings:
 1.1 - Change Public-facing name for OAuth
 1.2 - Change support e-mail
-2 - Firebase Rules:
-2.1 - Check rules for every request in app (search for "api." and analyze the requests)
-2.2 - Data validation
 3 - Firebase Auth
+3.0 - Enable Google auth
 3.1 - Set up Facebook Auth
 3.2 - Set up custom domain for Email templates
-3.3 - Test Reset Password, Verify Email, Change Email
+3.3 - Set up custom domain name for Google Auth Redirect (add to Authorised domains in console)
 4 - Firebase Quotas
 4.1 - Set up quotas for firestore
 5 - Firebase production project
@@ -21,9 +19,11 @@
 7 - Icons
 7.1 - Change favicons, manifest.json
 7.2 - Add logo instead of name in main page
+8 - Analytics
 
 # TODO
 
+Check written notes
 Hooks
 Refactor imports
 

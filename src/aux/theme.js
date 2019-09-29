@@ -1,12 +1,12 @@
-import lightBlue from '@material-ui/core/colors/lightBlue';
+import cyan from '@material-ui/core/colors/cyan';
 import grey from '@material-ui/core/colors/grey';
 
 export default {
   palette: {
     primary: {
-      light: lightBlue[100],
-      main: lightBlue[500],
-      dark: lightBlue[700],
+      light: cyan[100],
+      main: cyan[500],
+      dark: cyan[700],
       contrastText: grey[50]
     },
     secondary: {

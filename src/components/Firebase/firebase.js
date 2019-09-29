@@ -61,6 +61,8 @@ export default class Firebase {
   doSignInWithEmailAndPassword = (email, password) =>
     this.auth.signInWithEmailAndPassword(email, password);
 
+  doSignInWithRedirect = provider => this.auth.signInWithRedirect(provider);
+
   doSignOut = () => this.auth.signOut();
 
   doSendPasswordResetEmail = email => this.auth.sendPasswordResetEmail(email);

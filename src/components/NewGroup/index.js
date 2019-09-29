@@ -107,7 +107,7 @@ class NewGroup extends Component {
           helperText="You cannot change this later"
           inputProps={{
             min: 2,
-            max: 50
+            max: 99
           }}
         />
         <ChipInput

@@ -43,7 +43,7 @@ service cloud.firestore {
 
       allow create: if isAuthenticated() && isVerified() // AUTH
                     && isStringLessThanOrEqual(request.resource.data.title, 54) // title (required)
-                    && int(request.resource.data.memberLimit) >= 2 && int(request.resource.data.memberLimit) <= 50 // memberLimit (required)
+                    && int(request.resource.data.memberLimit) >= 2 && int(request.resource.data.memberLimit) <= 99 // memberLimit (required)
                     && (isNotChanged('tags') || request.resource.data.tags.size() <= 10) // tags
                     && request.resource.data.founder == request.auth.uid // founder (required)
                     && hasCorrectTime(request.resource.data.createdAt) // createdAt (required)

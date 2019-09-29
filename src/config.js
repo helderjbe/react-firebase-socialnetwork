@@ -3,14 +3,14 @@ export const SEARCH_CONFIG = {
   searchKey: process.env.REACT_APP_ALGOLIA_SEARCH_KEY
 };
 
-export const ENV_PREFIX = process.env.REACT_APP_PROJECT_ID.includes('prod')
-  ? 'prod_'
-  : 'dev_';
+export const ENV_PREFIX =
+  process.env.NODE_ENV === 'production' ? 'prod_' : 'dev_';
 
+const SUFFIX = process.env.NODE_ENV === 'production' ? '_PROD' : '_DEV';
 export const APP_CONFIG = {
-  apiKey: process.env.REACT_APP_API_KEY,
-  authDomain: process.env.REACT_APP_AUTH_DOMAIN,
-  databaseURL: process.env.REACT_APP_DATABASE_URL,
-  projectId: process.env.REACT_APP_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_STORAGE_BUCKET
+  apiKey: process.env['REACT_APP_API_KEY' + SUFFIX],
+  authDomain: process.env['REACT_APP_AUTH_DOMAIN' + SUFFIX],
+  databaseURL: process.env['REACT_APP_DATABASE_URL' + SUFFIX],
+  projectId: process.env['REACT_APP_PROJECT_ID' + SUFFIX],
+  storageBucket: process.env['REACT_APP_STORAGE_BUCKET' + SUFFIX]
 };

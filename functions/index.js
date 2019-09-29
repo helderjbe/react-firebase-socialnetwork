@@ -61,10 +61,7 @@ exports.onWriteGroup = functions.firestore
     });
 
     // Saving logic
-    if (
-      (triggerType === 'update' || triggerType === 'create') &&
-      data.memberCount < data.memberLimit
-    ) {
+    if (triggerType === 'update' && data.memberCount < data.memberLimit) {
       // Cater data for saving
       if ('founder' in data) {
         delete data.founder;
@@ -72,9 +69,11 @@ exports.onWriteGroup = functions.firestore
       data.objectID = gid;
 
       return index.saveObject(data);
-    } else {
+    } else if (!(triggerType === 'create')) {
       return index.deleteObject(gid);
     }
+
+    return false;
   });
 
 exports.onCreateGroup = functions.firestore
@@ -116,37 +115,43 @@ exports.onWriteGroupMember = functions.firestore
     const uid = context.params.uid;
 
     /* Custom Claims */
+    // TODO: Make custom claims updatable from db only
     // only change custom claims if there is a change in the data role
     if (!(triggerType === 'update' && data.role === previousData.role)) {
       const user = await auth.getUser(uid);
 
-      let currentClaims = {};
-      let newClaims = {};
+      let claims = {};
 
       if (isObject(user.customClaims)) {
-        currentClaims = { ...user.customClaims };
+        claims = { ...user.customClaims };
       }
 
+      const userClaimsDoc = await firestore
+        .collection('userClaims')
+        .doc(uid)
+        .get();
+
+      let newGroups = userClaimsDoc.exists ? userClaimsDoc.data() : {};
       switch (triggerType) {
         case 'create':
         case 'update':
-          newClaims = { groups: { [gid]: data.role } };
+          newGroups[gid] = data.role;
           break;
         case 'delete':
-          delete currentClaims.groups[gid];
+          delete newGroups[gid];
       }
 
-      const updatedClaims = merge.all([currentClaims, newClaims]);
-
-      if (updatedClaims.groups.length > MAX_GROUPS) {
+      if (Object.keys(newGroups).length > MAX_GROUPS) {
         return false;
       }
 
-      await auth.setCustomUserClaims(uid, updatedClaims);
+      claims.groups = newGroups;
+
+      await auth.setCustomUserClaims(uid, claims);
       await firestore
         .collection('userClaims')
         .doc(uid)
-        .set(updatedClaims.groups);
+        .set(newGroups);
     }
 
     return true;

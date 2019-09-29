@@ -1,46 +1,96 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { withRouter } from 'react-router-dom';
 import * as ROUTES from '../../constants/routes';
 
 import { withFirebase } from '../Firebase';
 import { withSnackbar } from '../Snackbar';
+import { withUserSession } from '../Session';
 
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
-import { LinearProgress } from '@material-ui/core';
+import { LinearProgress, Box, Divider } from '@material-ui/core';
 
-class SignIn extends Component {
-  state = { email: '', password: '', loading: false };
+import GoogleLogo from './googleLogo.png';
+import FacebookLogo from './facebookLogo.png';
 
-  onSubmit = async event => {
+const SignIn = ({ history, api, callSnackbar, authstate }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (authstate) {
+      history.push(ROUTES.HOME);
+    }
+  }, [authstate, history]);
+
+  const onSubmit = async event => {
     event.preventDefault();
 
-    const { email, password } = this.state;
-    const { api, history, callSnackbar } = this.props;
-
-    await this.setState({ loading: true });
-
     try {
+      await setLoading(true);
+
       await api.doSignInWithEmailAndPassword(email, password);
       history.push(ROUTES.HOME);
     } catch (error) {
-      this.setState({ loading: false });
+      setLoading(false);
       callSnackbar(error.message, 'error');
     }
   };
 
-  onChange = event => {
-    this.setState({ [event.target.name]: event.target.value });
+  const onGoogleSignIn = () => {
+    const provider = new api.firebase.auth.GoogleAuthProvider();
+
+    api.doSignInWithRedirect(provider);
   };
 
-  render() {
-    const { email, password, loading } = this.state;
+  const onFacebookSignIn = () => {
+    const provider = new api.firebase.auth.FacebookAuthProvider();
 
-    const isInvalid = password === '' || email === '' || loading;
+    api.doSignInWithRedirect(provider);
+  };
 
-    return (
-      <form onSubmit={this.onSubmit}>
+  const isInvalid = password === '' || email === '' || loading;
+
+  return (
+    <>
+      <Box mb={1.5}>
+        <Button
+          fullWidth
+          variant="contained"
+          color="secondary"
+          onClick={onGoogleSignIn}
+        >
+          <img
+            src={GoogleLogo}
+            alt="Google Logo"
+            width={16}
+            height={16}
+            style={{ marginRight: '8px' }}
+          />
+          Sign In with Google
+        </Button>
+      </Box>
+      <Button
+        fullWidth
+        variant="contained"
+        color="secondary"
+        onClick={onFacebookSignIn}
+      >
+        <img
+          src={FacebookLogo}
+          alt="Facebook Logo"
+          width={16}
+          height={16}
+          style={{ marginRight: '8px' }}
+        />
+        Sign In with Facebook
+      </Button>
+      <Box mt={3} mb={1}>
+        <Divider variant="middle" />
+      </Box>
+      <form onSubmit={onSubmit}>
         <TextField
           variant="outlined"
           margin="normal"
@@ -50,7 +100,7 @@ class SignIn extends Component {
           name="email"
           autoComplete="email"
           value={email}
-          onChange={this.onChange}
+          onChange={event => setEmail(event.target.value)}
           autoFocus
         />
         <TextField
@@ -62,7 +112,7 @@ class SignIn extends Component {
           label="Password"
           type="password"
           value={password}
-          onChange={this.onChange}
+          onChange={event => setPassword(event.target.value)}
         />
         <Button
           type="submit"
@@ -76,8 +126,8 @@ class SignIn extends Component {
         </Button>
         {loading && <LinearProgress />}
       </form>
-    );
-  }
-}
+    </>
+  );
+};
 
-export default withRouter(withFirebase(withSnackbar(SignIn)));
+export default withRouter(withFirebase(withUserSession(withSnackbar(SignIn))));

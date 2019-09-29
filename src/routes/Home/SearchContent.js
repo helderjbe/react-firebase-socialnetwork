@@ -248,18 +248,15 @@ const SearchContent = () => {
               <LoadingIndicator />
             </SearchIcon>
             <SearchInput />
-            <Tooltip title="Create a new group">
-              <IconButton component={Link} to={ROUTES.GROUPS_NEW}>
-                <GroupAdd color="inherit" />
+            <Tooltip title="Show filters">
+              <IconButton
+                onClick={handleExpandClick}
+                aria-expanded={expanded}
+                aria-label="show filters"
+              >
+                {expanded ? <ExpandLess /> : <ExpandMore />}
               </IconButton>
             </Tooltip>
-            <IconButton
-              onClick={handleExpandClick}
-              aria-expanded={expanded}
-              aria-label="show filters"
-            >
-              {expanded ? <ExpandLess /> : <ExpandMore />}
-            </IconButton>
           </SearchContainer>
         </Card>
       </Grid>

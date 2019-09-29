@@ -8,8 +8,7 @@ import algoliasearch from 'algoliasearch/lite';
 import {
   InstantSearch,
   Configure,
-  connectInfiniteHits,
-  connectStateResults
+  connectInfiniteHits
 } from 'react-instantsearch-dom';
 import { ENV_PREFIX, SEARCH_CONFIG } from '../../config';
 
@@ -28,29 +27,25 @@ import CardContent from '@material-ui/core/CardContent';
 import SearchContent from './SearchContent';
 import GroupCard from '../../components/GroupCard';
 
-const NoResultsCard = connectStateResults(
-  ({ isSearchStalled, show }) =>
-    show &&
-    !isSearchStalled && (
-      <Grid
-        item
-        xs={12}
-        component={Link}
-        to={ROUTES.GROUPS_NEW}
-        style={{ textDecoration: 'none' }}
-      >
-        <Card>
-          <CardContent>
-            <Box textAlign="center" my={1}>
-              <Typography variant="caption" color="textSecondary">
-                No groups were found based on that criteria
-              </Typography>
-              <Typography variant="h5">Create a new Group</Typography>
-            </Box>
-          </CardContent>
-        </Card>
-      </Grid>
-    )
+const CreateGroupLink = () => (
+  <Grid
+    item
+    xs={12}
+    component={Link}
+    to={ROUTES.GROUPS_NEW}
+    style={{ textDecoration: 'none' }}
+  >
+    <Card>
+      <CardContent>
+        <Box textAlign="center" my={1}>
+          <Typography variant="caption" color="textSecondary">
+            Don't find what you're looking for?
+          </Typography>
+          <Typography variant="h5">Create a new Group</Typography>
+        </Box>
+      </CardContent>
+    </Card>
+  </Grid>
 );
 
 const HomePage = ({ callSnackbar, hasMore, refine, hits }) => {
@@ -83,7 +78,7 @@ const HomePage = ({ callSnackbar, hasMore, refine, hits }) => {
       }
     >
       <SearchContent />
-      <NoResultsCard show={!hits.length} />
+      <CreateGroupLink />
       {hits.map(hit => (
         <Grid item xs={12} key={hit.objectID}>
           <Card>

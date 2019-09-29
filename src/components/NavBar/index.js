@@ -25,7 +25,11 @@ import Notifications from '@material-ui/icons/Notifications';
 
 import { IconButton, Tooltip, Badge } from '@material-ui/core';
 
+import { MediaQuerySmUp } from '../../aux/mediaQueries';
+
 import NotificationPopper from './NotificationPopper';
+
+import logo from './logo_40px.png';
 
 const HideOnScroll = props => {
   const { children } = props;
@@ -114,9 +118,25 @@ const NavBar = props => {
           <Toolbar>
             <Box mr="auto">
               <Link to={ROUTES.HOME} style={{ textDecoration: 'none' }}>
-                <Typography component="h1" variant="h6" color="secondary">
-                  Social Groups
-                </Typography>
+                <Box display="flex" flexDirection="row" alignItems="center">
+                  <img src={logo} alt="Flofus logo" />
+                  <MediaQuerySmUp>
+                    <Box ml={1}>
+                      <Typography
+                        component="h1"
+                        variant="h5"
+                        color="secondary"
+                        style={{
+                          fontFamily: 'Helvetica, Arial, sans-serif',
+                          letterSpacing: '0.1em',
+                          textShadow: '4px 4px rgba(0,0,0,0.10)'
+                        }}
+                      >
+                        F<span style={{ fontSize: '0.85em' }}>LOFUS</span>
+                      </Typography>
+                    </Box>
+                  </MediaQuerySmUp>
+                </Box>
               </Link>
             </Box>
             <Tooltip title="Account settings">
@@ -149,11 +169,7 @@ const NavBar = props => {
                 </Tooltip>
 
                 <Tooltip title="Sign out">
-                  <IconButton
-                    component={Link}
-                    to={ROUTES.SIGN_IN}
-                    onClick={handleSignOut}
-                  >
+                  <IconButton onClick={handleSignOut}>
                     <ExitToApp color="secondary" />
                   </IconButton>
                 </Tooltip>
