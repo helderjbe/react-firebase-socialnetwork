@@ -47,9 +47,8 @@ const useStyles1 = makeStyles(theme => ({
   }
 }));
 
-function SnackbarContentWrapper(props) {
+const SnackbarContentWrapper = ({ className, message, onClose, variant }) => {
   const classes = useStyles1();
-  const { className, message, onClose, variant, ...other } = props;
   const Icon = variantIcon[variant];
 
   return (
@@ -72,10 +71,9 @@ function SnackbarContentWrapper(props) {
           <CloseIcon className={classes.icon} />
         </IconButton>
       ]}
-      {...other}
     />
   );
-}
+};
 
 SnackbarContentWrapper.propTypes = {
   className: PropTypes.string,

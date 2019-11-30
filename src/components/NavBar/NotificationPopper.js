@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
 
 import moment from 'moment';
 
@@ -160,6 +161,14 @@ const NotificationPopper = ({
       </Paper>
     </Popover>
   );
+};
+
+NotificationPopper.propTypes = {
+  anchorEl: PropTypes.object,
+  handleClose: PropTypes.func.isRequired,
+  notifications: PropTypes.array.isRequired,
+  api: PropTypes.object.isRequired,
+  callSnackbar: PropTypes.func.isRequired
 };
 
 export default withFirebase(

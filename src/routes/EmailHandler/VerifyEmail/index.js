@@ -11,7 +11,7 @@ import Link from '@material-ui/core/Link';
 import Box from '@material-ui/core/Box';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
-const VerifyEmail = ({ api, actionCode, history }) => {
+const VerifyEmail = ({ api, actionCode, history, authstate }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
@@ -26,7 +26,7 @@ const VerifyEmail = ({ api, actionCode, history }) => {
       }
     };
     verifyEmail();
-  }, [actionCode, api.auth, history]);
+  }, [actionCode, api, history]);
 
   return (
     <>

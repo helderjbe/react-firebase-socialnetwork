@@ -133,6 +133,8 @@ Message.propTypes = {
   name: PropTypes.string
 };
 
+let userList = {};
+
 const Group = ({
   authstate,
   match: {
@@ -175,6 +177,8 @@ const Group = ({
   );
 
   useEffect(() => {
+    userList = {};
+
     setName('Loading name...');
     setData([]);
     setUsers({});
@@ -202,9 +206,10 @@ const Group = ({
             const snapshotData = snapshot.doc.data();
             if (
               snapshotData.from !== authstate.uid &&
-              !(snapshotData.from in users)
+              !(snapshotData.from in userList)
             ) {
               handleNewUser(snapshotData.from);
+              userList[snapshotData.from] = true;
             }
             snapshot.newIndex >= 0 &&
               setData(prevData =>
@@ -230,8 +235,6 @@ const Group = ({
     checkAdmin();
 
     return cancelListener;
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [api, authstate.uid, callSnackbar, gid, handleNewUser]);
 
   const fetchOldMessages = async () => {
@@ -240,7 +243,7 @@ const Group = ({
     const orderBy = 'createdAt';
 
     if (!hasMore || isFetching) return false;
-    await setIsFetching(true);
+    setIsFetching(true);
 
     try {
       const snapshots = await api

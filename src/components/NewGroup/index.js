@@ -10,7 +10,6 @@ import ChipInput from 'material-ui-chip-input';
 import * as ROUTES from '../../constants/routes';
 
 import Button from '@material-ui/core/Button';
-import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import LinearProgress from '@material-ui/core/LinearProgress';
 
@@ -19,7 +18,8 @@ class NewGroup extends Component {
     title: '',
     memberLimit: 2,
     tags: [],
-    loading: false
+    loading: false,
+    tagValidation: ''
   };
 
   onSubmit = async event => {
@@ -34,7 +34,7 @@ class NewGroup extends Component {
       const doc = await api.refGroups().add({
         title,
         tags,
-        memberLimit,
+        memberLimit: Number(memberLimit),
         founder: authstate.uid,
         createdAt: api.firebase.firestore.Timestamp.now().toMillis()
       });
@@ -54,9 +54,33 @@ class NewGroup extends Component {
     this.setState({ [event.target.name]: event.target.value });
   };
 
+  onTagUpdateInput = event => {
+    const string = event.target.value.match(/[^0-9a-z]/i);
+    if (string && string.length) {
+      const replacedString = event.target.value.replace(/[^0-9a-z]/gi, '');
+      if (this.onTagBeforeAdd(replacedString)) {
+        this.onTagAdd(replacedString);
+      }
+    }
+  };
+
   onTagBeforeAdd = chip => {
-    const { tags } = this.state;
-    return chip.length >= 3 && chip.length <= 20 && tags.length <= 10;
+    const { tags, tagValidation } = this.state;
+
+    if (chip.length < 3) {
+      this.setState({ tagValidation: 'Tag must 3 chars long or more' });
+      return false;
+    } else if (chip.length > 20) {
+      this.setState({ tagValidation: 'Tag must 20 chars long or less' });
+      return false;
+    } else if (tags.length >= 10) {
+      this.setState({ tagValidation: 'A group cannot have more than 10 tags' });
+      return false;
+    } else if (tagValidation !== '') {
+      this.setState({ tagValidation: '' });
+    }
+
+    return true;
   };
 
   onTagAdd = chip => {
@@ -76,7 +100,7 @@ class NewGroup extends Component {
   };
 
   render() {
-    const { title, memberLimit, tags, loading } = this.state;
+    const { title, memberLimit, tags, loading, tagValidation } = this.state;
 
     const isInvalid = title.length < 6 || loading;
 
@@ -110,18 +134,23 @@ class NewGroup extends Component {
             max: 99
           }}
         />
-        <ChipInput
-          fullWidth
-          label="Tags"
-          value={tags}
-          variant="outlined"
-          newChipKeyCodes={[13, 9, 188]}
-          margin="normal"
-          placeholder="Freelance,Beginner,Accountability, ..."
-          onBeforeAdd={this.onTagBeforeAdd}
-          onAdd={this.onTagAdd}
-          onDelete={this.onTagDelete}
-        />
+        {
+          <ChipInput
+            fullWidth
+            label="Tags"
+            value={tags}
+            variant="outlined"
+            margin="normal"
+            placeholder="Freelance,Beginner,Accountability, ..."
+            onBeforeAdd={this.onTagBeforeAdd}
+            onAdd={this.onTagAdd}
+            onDelete={this.onTagDelete}
+            onUpdateInput={this.onTagUpdateInput}
+            error={tagValidation !== ''}
+            helperText={tagValidation}
+            clearInputValueOnChange
+          />
+        }
         <Button
           type="submit"
           fullWidth

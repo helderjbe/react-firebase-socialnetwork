@@ -2,6 +2,7 @@ import firebase from 'firebase/app';
 import 'firebase/firestore';
 import 'firebase/storage';
 import 'firebase/auth';
+import 'firebase/analytics';
 
 import { APP_CONFIG } from '../../config';
 
@@ -9,6 +10,8 @@ export default class Firebase {
   constructor() {
     firebase.initializeApp(APP_CONFIG);
     firebase.firestore().enablePersistence();
+
+    process.env.NODE_ENV === 'production' && firebase.analytics();
 
     this.firebase = firebase;
     this.firestore = firebase.firestore();
@@ -52,6 +55,9 @@ export default class Firebase {
   refUserClaims = () => this.firestore.collection('userClaims');
 
   refUserClaimsById = uid => this.refUserClaims().doc(uid);
+
+  // Feedback
+  refFeedback = () => this.firestore.collection('feedback');
 
   // *** Auth API ***
 

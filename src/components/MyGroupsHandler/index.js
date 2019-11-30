@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
 import makeCancelable from 'makecancelable';
@@ -16,32 +16,73 @@ import GroupRow from '../../components/GroupRow';
 import { CardContent, Typography } from '@material-ui/core';
 import { withFirebase } from '../Firebase';
 
-class MyGroupsHandler extends Component {
-  state = { data: {}, sortedData: [] };
+let cancelGetGroupMessages = {};
+let datedGroups = [];
+let tokenGroups = {};
 
-  componentDidMount() {
-    const { api, callSnackbar } = this.props;
-    const self = this;
+const MyGroupsHandler = ({ api, callSnackbar }) => {
+  const [data, setData] = useState({});
+  const [sortedData, setSortedData] = useState([]);
 
-    this.cancelGetGroups = {};
-    this.cancelGetGroupMessages = {};
+  const fetchLastMessage = useCallback(
+    (gid, index) => {
+      cancelGetGroupMessages[index] = makeCancelable(
+        api
+          .refGroupMessages(gid)
+          .orderBy('createdAt', 'desc')
+          .limit(1)
+          .get(),
+        snapshots => {
+          let messageData = {};
+          if (snapshots.docs[0]) {
+            messageData = snapshots.docs[0].data();
+          }
 
-    this.cancelGetIdToken = makeCancelable(
+          // data
+          setData(prevData => {
+            const updatedData = {
+              ...prevData,
+              [gid]: { ...prevData[gid], message: { ...messageData } }
+            };
+
+            // sortedData
+            datedGroups.push({ date: messageData.createdAt || 0, gid });
+
+            // TODO: for now it's sorting the array every time. Best is to insert in the right place and keep it sorted.
+            if (datedGroups.length === Object.keys(updatedData).length) {
+              setSortedData(sort(datedGroups).desc(group => group.date));
+            }
+
+            return updatedData;
+          });
+
+          delete cancelGetGroupMessages[index];
+        },
+        error => callSnackbar(error.message, 'error')
+      );
+    },
+    [api, callSnackbar]
+  );
+
+  useEffect(() => {
+    let cancelGetGroups = {};
+    const cancelGetIdToken = makeCancelable(
       api.doGetIdTokenResult(),
       token => {
-        self.tokenGroups = token.claims.groups;
-        Object.keys(self.tokenGroups || {}).forEach(
+        tokenGroups = token.claims.groups;
+        Object.keys(token.claims.groups).forEach(
           (gid, index) =>
-            (this.cancelGetGroups[index] = makeCancelable(
+            (cancelGetGroups[index] = makeCancelable(
               api.refGroupById(gid).get(),
-              async doc => {
-                await this.setState(state => ({
-                  data: { ...state.data, [gid]: { ...doc.data() } }
+              doc => {
+                setData(prevData => ({
+                  ...prevData,
+                  [gid]: { ...prevData[gid], ...doc.data() }
                 }));
 
-                this.fetchLastMessage(gid, index);
+                fetchLastMessage(gid, index);
 
-                delete this.cancelGetGroups[index];
+                delete cancelGetGroups[index];
               },
               error => callSnackbar(error.message, 'error')
             ))
@@ -49,116 +90,52 @@ class MyGroupsHandler extends Component {
       },
       error => callSnackbar(error.message, 'error')
     );
-  }
 
-  componentWillUnmount() {
-    if (this.cancelGetIdToken) {
-      this.cancelGetIdToken();
-    }
+    return () => {
+      cancelGetIdToken();
 
-    if (this.cancelGetGroups) {
-      Object.values(this.cancelGetGroups).forEach(cancelRequest => {
+      Object.values(cancelGetGroups).forEach(cancelRequest => {
         if (cancelRequest) cancelRequest();
       });
-    }
 
-    if (this.cancelGetGroupMessages) {
-      Object.values(this.cancelGetGroupMessages).forEach(cancelRequest => {
+      Object.values(cancelGetGroupMessages).forEach(cancelRequest => {
         if (cancelRequest) cancelRequest();
       });
-    }
-  }
 
-  fetchLastMessage = (gid, index) => {
-    const { api, callSnackbar } = this.props;
+      cancelGetGroupMessages = {};
+      datedGroups = [];
+      tokenGroups = {};
+    };
+  }, [api, callSnackbar, fetchLastMessage]);
 
-    const self = this;
-
-    this.cancelGetGroupMessages[index] = makeCancelable(
-      api
-        .refGroupMessages(gid)
-        .orderBy('createdAt', 'desc')
-        .limit(1)
-        .get(),
-      async snapshots => {
-        let messageData = {};
-        if (snapshots.docs[0]) {
-          messageData = snapshots.docs[0].data();
-        }
-
-        await this.setState(state => {
-          // data
-          const data = { ...state.data };
-          data[gid] = {
-            ...data[gid],
-            message: { ...messageData }
-          };
-
-          // sortedData
-          if (self.groups) {
-            self.groups = [
-              ...self.groups,
-              { date: messageData.createdAt || 0, gid }
-            ];
-          } else {
-            self.groups = [{ date: messageData.createdAt || 0, gid }];
-          }
-
-          let sortedData = null;
-          if (self.groups.length === Object.keys(data).length) {
-            sortedData = sort(self.groups).desc(group => group.date);
-          }
-
-          if (sortedData) {
-            return { data, sortedData };
-          } else {
-            return { data };
-          }
-        });
-
-        delete this.cancelGetGroupMessages[index];
-      },
-      error => callSnackbar(error.message, 'error')
-    );
-  };
-
-  render() {
-    const { data, sortedData } = this.state;
-
-    return (
-      <Grid container spacing={1}>
-        {Object.keys(this.tokenGroups || {}).length !== sortedData.length && (
-          <Grid item xs={12}>
-            <Box width="100%" textAlign="center" my={2}>
-              <CircularProgress />
-            </Box>
-          </Grid>
-        )}
-        {Object.keys(this.tokenGroups || {}).length === 0 &&
-          sortedData.length === 0 && (
-            <Grid item xs={12}>
-              <Card>
-                <CardContent>
-                  <Typography
-                    align="center"
-                    variant="body2"
-                    color="textSecondary"
-                  >
-                    No groups under your belt yet
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-        {sortedData.map((entry, index) => (
-          <Grid item xs={12} key={`grouprow ${index}`}>
-            <GroupRow {...data[entry.gid]} gid={entry.gid} />
-          </Grid>
-        ))}
-      </Grid>
-    );
-  }
-}
+  return (
+    <Grid container spacing={1}>
+      {Object.keys(tokenGroups).length !== sortedData.length && (
+        <Grid item xs={12}>
+          <Box width="100%" textAlign="center" my={2}>
+            <CircularProgress />
+          </Box>
+        </Grid>
+      )}
+      {Object.keys(tokenGroups).length === 0 && sortedData.length === 0 && (
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography align="center" variant="body2" color="textSecondary">
+                No groups under your belt yet
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      )}
+      {sortedData.map((entry, index) => (
+        <Grid item xs={12} key={`grouprow ${index}`}>
+          <GroupRow {...data[entry.gid]} gid={entry.gid} />
+        </Grid>
+      ))}
+    </Grid>
+  );
+};
 
 MyGroupsHandler.propTypes = {
   api: PropTypes.object.isRequired

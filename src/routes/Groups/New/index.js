@@ -11,8 +11,7 @@ import {
   withEmailVerification
 } from '../../../components/Session';
 
-const NewGroupPage = props => {
-  const { authstate } = props;
+const NewGroupPage = ({ authstate }) => {
   return (
     <Card>
       <CardContent>

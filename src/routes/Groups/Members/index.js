@@ -201,7 +201,10 @@ class MembersGroupPage extends Component {
             userSnapshot => {
               this.setState(state => ({
                 data: [...state.data, { ...snapshot.data(), uid: snapshot.id }],
-                userData: { [userSnapshot.id]: { ...userSnapshot.data() } }
+                userData: {
+                  ...state.userData,
+                  [userSnapshot.id]: { ...userSnapshot.data() }
+                }
               }));
             },
             error => callSnackbar(error.message, 'error')

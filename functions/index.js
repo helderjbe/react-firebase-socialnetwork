@@ -1,4 +1,3 @@
-const merge = require('deepmerge');
 const algoliasearch = require('algoliasearch');
 
 const functions = require('firebase-functions');
@@ -22,9 +21,9 @@ const client = algoliasearch(
   functions.config().algolia.api_key
 );
 
-const ENV_PREFIX = process.env.GCLOUD_PROJECT.includes('prod')
-  ? 'prod_'
-  : 'dev_';
+const ENV_PREFIX = process.env.GCLOUD_PROJECT.includes('dev')
+  ? 'dev_'
+  : 'prod_';
 
 const ALGOLIA_INDEX_NAME = ENV_PREFIX + functions.config().algolia.index_name;
 

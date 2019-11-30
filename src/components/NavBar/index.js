@@ -19,9 +19,12 @@ import Slide from '@material-ui/core/Slide';
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 
+import Feedback from '@material-ui/icons/Feedback';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import ExitToApp from '@material-ui/icons/ExitToApp';
 import Notifications from '@material-ui/icons/Notifications';
+
+import amber from '@material-ui/core/colors/amber';
 
 import { IconButton, Tooltip, Badge } from '@material-ui/core';
 
@@ -31,9 +34,7 @@ import NotificationPopper from './NotificationPopper';
 
 import logo from './logo_40px.png';
 
-const HideOnScroll = props => {
-  const { children } = props;
-
+const HideOnScroll = ({ children }) => {
   const trigger = useScrollTrigger();
 
   const theme = useTheme();
@@ -54,8 +55,8 @@ HideOnScroll.propTypes = {
 
 const NotificationBadge = withStyles(theme => ({
   badge: {
-    backgroundColor: theme.palette.primary.dark,
-    boxShadow: `0 0 0 2px ${theme.palette.primary.dark}`,
+    backgroundColor: theme.palette.secondary.dark,
+    boxShadow: `0 0 0 2px ${theme.palette.secondary.dark}`,
     '&::after': {
       position: 'absolute',
       top: 0,
@@ -64,7 +65,7 @@ const NotificationBadge = withStyles(theme => ({
       height: '100%',
       borderRadius: '50%',
       animation: '$ripple 1.2s infinite ease-in-out',
-      border: '1px solid' + theme.palette.primary.light,
+      border: '1px solid' + theme.palette.primary.dark,
       content: '""'
     }
   },
@@ -149,6 +150,12 @@ const NavBar = props => {
             </Tooltip>
             {authstate && (
               <>
+                <Tooltip title="Send feedback">
+                  <IconButton component={Link} to={ROUTES.FEEDBACK}>
+                    <Feedback style={{ color: amber[100] }} />
+                  </IconButton>
+                </Tooltip>
+
                 <Tooltip title="Notifications">
                   <IconButton
                     onClick={event => {
@@ -184,7 +191,10 @@ const NavBar = props => {
 };
 
 NavBar.propTypes = {
-  authstate: PropTypes.object
+  authstate: PropTypes.object,
+  api: PropTypes.object.isRequired,
+  callSnackbar: PropTypes.func.isRequired,
+  notifications: PropTypes.array.isRequired
 };
 
 export default withFirebase(

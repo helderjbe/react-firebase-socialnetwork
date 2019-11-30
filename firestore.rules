@@ -9,9 +9,9 @@ service cloud.firestore {
       return request.auth.uid != null;
     }
 
-    function isVerified() {
-      return request.auth.token.email_verified;
-    }
+    //function isVerified() {
+    //  return request.auth.token.email_verified || request.auth.token.firebase.sign_in_provider == 'facebook.com' || request.auth.token.firebase.sign_in_provider == 'google.com';
+    //}
 
     function hasGroup(gid) {
       return 'groups' in request.auth.token && gid in request.auth.token.groups;
@@ -41,9 +41,9 @@ service cloud.firestore {
     match /groups/{gid} {
       allow read: if true;
 
-      allow create: if isAuthenticated() && isVerified() // AUTH
+      allow create: if isAuthenticated() // AUTH
                     && isStringLessThanOrEqual(request.resource.data.title, 54) // title (required)
-                    && int(request.resource.data.memberLimit) >= 2 && int(request.resource.data.memberLimit) <= 99 // memberLimit (required)
+                    && int(request.resource.data.memberLimit) >= 2 && int(request.resource.data.memberLimit) <= 99 // memberLimit (required) (has to be Number)
                     && (isNotChanged('tags') || request.resource.data.tags.size() <= 10) // tags
                     && request.resource.data.founder == request.auth.uid // founder (required)
                     && hasCorrectTime(request.resource.data.createdAt) // createdAt (required)
@@ -51,7 +51,7 @@ service cloud.firestore {
                     && isNotChanged('updatedAt') // updatedAt (not allowed)
                     && isNotChanged('memberCount'); // memberCount (not allowed)
 
-      allow update: if isAuthenticated() && isVerified() // AUTH
+      allow update: if isAuthenticated() // AUTH
                     && isStringLessThanOrEqual(request.resource.data.title, 54) // title (required)
                     && (isNotChanged('tags') || request.resource.data.tags.size() <= 10) // tags
                     && (isNotChanged('details') || isStringLessThanOrEqual(request.resource.data.details, 800)) // details
@@ -65,41 +65,41 @@ service cloud.firestore {
       allow delete: if false
 
       match /applications/{uid} {
-        allow read: if isAuthenticated() && isVerified()
+        allow read: if isAuthenticated()
                     && (isOwner(uid) || isGroupAdmin(gid));
 
-        allow create: if isAuthenticated() && isVerified()
+        allow create: if isAuthenticated()
                       && isNotInGroup(gid)
                       && hasCorrectTime(request.resource.data.createdAt); // createdAt (required)
 
         // update to accept
-        allow update: if isAuthenticated() && isVerified()
+        allow update: if isAuthenticated()
                       && isGroupAdmin(gid)
                       && get(/databases/$(database)/documents/groups/$(gid)).data.memberCount < get(/databases/$(database)/documents/groups/$(gid)).data.memberLimit;
 
-        allow delete: if isAuthenticated() && isVerified()
+        allow delete: if isAuthenticated()
                       && isGroupAdmin(gid);
       }
 
       match /members/{uid} {
-        allow read: if isAuthenticated() && isVerified()
+        allow read: if isAuthenticated()
                     && hasGroup(gid);
 
         allow create: if false;
 
-        allow update: if isAuthenticated() && isVerified()
+        allow update: if isAuthenticated()
                       && isGroupAdmin(gid)
                       && isNotChanged('createdAt'); // createdAt (not allowed)
 
-        allow delete: if isAuthenticated() && isVerified()
+        allow delete: if isAuthenticated()
                       && (isGroupAdmin(gid) || isOwner(uid));
       }
 
       match /messages/{mid} {
-        allow read: if isAuthenticated() && isVerified()
+        allow read: if isAuthenticated()
                     && hasGroup(gid);
 
-        allow create: if isAuthenticated() && isVerified()
+        allow create: if isAuthenticated()
                       && hasGroup(gid)
                       && isOwner(request.resource.data.from)
                       && hasCorrectTime(request.resource.data.createdAt) // createdAt (required)
@@ -112,6 +112,11 @@ service cloud.firestore {
     match /userClaims/{uid} {
       allow read: if isOwner(uid);
       allow write: if false;
+    }
+
+    match /feedback/{uid} {
+      allow read: if false;
+      allow write: if isAuthenticated();
     }
 
     match /users/{uid} {

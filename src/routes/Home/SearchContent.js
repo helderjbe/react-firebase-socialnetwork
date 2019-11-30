@@ -2,20 +2,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import {
-  Highlight,
-  connectRefinementList,
   connectSearchBox,
   connectStateResults,
-  connectRange
+  connectRange,
+  connectRefinementList,
+  Highlight
 } from 'react-instantsearch-dom';
 
-import { Link } from 'react-router-dom';
-import * as ROUTES from '../../constants/routes';
-
 import { fade, withStyles, styled } from '@material-ui/core/styles';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
 import InputBase from '@material-ui/core/InputBase';
-import Checkbox from '@material-ui/core/Checkbox';
 import TextField from '@material-ui/core/TextField';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Slider from '@material-ui/core/Slider';
@@ -23,18 +18,14 @@ import Grid from '@material-ui/core/Grid';
 import Card from '@material-ui/core/Card';
 import Collapse from '@material-ui/core/Collapse';
 import IconButton from '@material-ui/core/IconButton';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
+import Divider from '@material-ui/core/Divider';
 
 import Search from '@material-ui/icons/Search';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import ExpandLess from '@material-ui/icons/ExpandLess';
-import GroupAdd from '@material-ui/icons/GroupAdd';
-import {
-  CardContent,
-  Divider,
-  Box,
-  Typography,
-  Tooltip
-} from '@material-ui/core';
+import { CardContent, Box, Typography, Tooltip } from '@material-ui/core';
 
 import algoliaLogo from './algolia-logo.svg';
 
@@ -183,12 +174,14 @@ const MemberCountSlider = connectRange(
 );
 
 MemberCountSlider.propTypes = {
+  min: PropTypes.number,
+  max: PropTypes.number,
   refine: PropTypes.func,
   currentRefinement: PropTypes.string
 };
 
 const Tags = connectRefinementList(
-  ({ items, isFromSearch, refine, searchForItems, createURL }) => (
+  ({ items, isFromSearch, refine, searchForItems }) => (
     <>
       <Grid container spacing={0}>
         {items.map((item, index) => (
@@ -229,6 +222,9 @@ const Tags = connectRefinementList(
 );
 
 Tags.propTypes = {
+  items: PropTypes.array,
+  isFromSearch: PropTypes.bool,
+  searchForItems: PropTypes.func,
   refine: PropTypes.func
 };
 

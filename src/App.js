@@ -31,6 +31,8 @@ import GroupDetailsPage from './routes/Groups/Details';
 import GroupPage from './routes/Groups/Group';
 import GroupsPage from './routes/Groups';
 import EmailHandlerPage from './routes/EmailHandler';
+import FeedbackPage from './routes/Feedback';
+import PrivacyPage from './routes/Privacy';
 import NotFoundPage from './routes/NotFound';
 
 import NavBar from './components/NavBar';
@@ -57,6 +59,8 @@ const routesList = [
   { path: ROUTES.GROUPS_ID_DETAILS, component: GroupDetailsPage },
   { path: ROUTES.GROUPS_ID_MEMBERS, component: MembersGroupPage },
   { path: ROUTES.EMAIL_HANDLER, component: EmailHandlerPage },
+  { path: ROUTES.FEEDBACK, component: FeedbackPage },
+  { path: ROUTES.PRIVACY, component: PrivacyPage },
   { component: NotFoundPage }
 ];
 
@@ -64,24 +68,26 @@ const App = ({ authstate }) => (
   <Router>
     <NavBar />
     <MainContainer maxWidth={'md'}>
-      <Grid container spacing={2} justify="center">
-        <Grid item sm={8} xs={12}>
-          <Switch>
-            {routesList.map((props, index) => (
-              <Route {...props} key={`Route${index}`} />
-            ))}
-          </Switch>
+      <main>
+        <Grid container spacing={2} justify="center">
+          <Grid item sm={8} xs={12}>
+            <Switch>
+              {routesList.map((props, index) => (
+                <Route {...props} key={`Route${index}`} />
+              ))}
+            </Switch>
+          </Grid>
+          {authstate && (
+            <MediaQuerySmUp>
+              <Grid item sm={4}>
+                <StickyBox offsetTop={72} offsetBottom={20}>
+                  <SideBar />
+                </StickyBox>
+              </Grid>
+            </MediaQuerySmUp>
+          )}
         </Grid>
-        {authstate && (
-          <MediaQuerySmUp>
-            <Grid item sm={4}>
-              <StickyBox offsetTop={72} offsetBottom={20}>
-                <SideBar />
-              </StickyBox>
-            </Grid>
-          </MediaQuerySmUp>
-        )}
-      </Grid>
+      </main>
     </MainContainer>
     <MediaQueryXsDown>
       {authstate && (

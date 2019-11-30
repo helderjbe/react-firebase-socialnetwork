@@ -25,18 +25,33 @@ import defaultAvatar from '../../common/images/defaultAvatar.jpg';
 
 import UserProfileModal from '../UserProfileModal';
 
+const INITIAL_STATE = {
+  data: [],
+  users: {},
+  avatars: {},
+  hasMore: true,
+  profileIdOpen: null,
+  loading: false
+};
+
 class Applications extends Component {
-  state = {
-    data: [],
-    users: {},
-    avatars: {},
-    hasMore: true,
-    profileIdOpen: null,
-    loading: false
-  };
+  state = INITIAL_STATE;
 
   componentDidMount() {
     this.fetchApplications();
+  }
+
+  async componentDidUpdate(prevProps) {
+    const {
+      match: {
+        params: { gid }
+      }
+    } = this.props;
+
+    if (gid !== prevProps.match.params.gid) {
+      await this.setState(INITIAL_STATE);
+      this.fetchApplications();
+    }
   }
 
   fetchApplications = async () => {

@@ -22,8 +22,6 @@ import Avatar from '@material-ui/core/Avatar';
 import Divider from '@material-ui/core/Divider';
 import Dialog from '@material-ui/core/Dialog';
 import Box from '@material-ui/core/Box';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Edit from '@material-ui/icons/Edit';
 import { withStyles } from '@material-ui/core';
@@ -55,6 +53,7 @@ class EditGroup extends Component {
     details: '',
     questions: ['', '', ''],
     tags: [],
+    tagValidation: '',
 
     imageSrc: null,
     crop: { x: 0, y: 0 },
@@ -219,13 +218,38 @@ class EditGroup extends Component {
     });
   };
 
+  onTagUpdateInput = event => {
+    const string = event.target.value.match(/[^0-9a-z]/i);
+    if (string && string.length) {
+      const replacedString = event.target.value.replace(/[^0-9a-z]/gi, '');
+      if (this.onTagBeforeAdd(replacedString)) {
+        this.onTagAdd(replacedString);
+      }
+    }
+  };
+
   onTagBeforeAdd = chip => {
-    const { tags } = this.state;
-    return chip.length >= 3 && chip.length <= 20 && tags.length <= 10;
+    const { tags, tagValidation } = this.state;
+
+    if (chip.length < 3) {
+      this.setState({ tagValidation: 'Tag must 3 chars long or more' });
+      return false;
+    } else if (chip.length > 20) {
+      this.setState({ tagValidation: 'Tag must 20 chars long or less' });
+      return false;
+    } else if (tags.length >= 10) {
+      this.setState({ tagValidation: 'A group cannot have more than 10 tags' });
+      return false;
+    } else if (tagValidation !== '') {
+      this.setState({ tagValidation: '' });
+    }
+
+    return true;
   };
 
   onTagAdd = chip => {
     const { tags } = this.state;
+
     this.setState({
       tags: [...tags, chip]
     });
@@ -233,6 +257,7 @@ class EditGroup extends Component {
 
   onTagDelete = deletedChip => {
     const { tags } = this.state;
+
     this.setState({
       tags: tags.filter(c => c !== deletedChip)
     });
@@ -248,7 +273,8 @@ class EditGroup extends Component {
       imageSrc,
       croppedImage,
       imageCropDialog,
-      loading
+      loading,
+      tagValidation
     } = this.state;
 
     const isInvalid = title.length < 6 || loading;
@@ -342,18 +368,23 @@ class EditGroup extends Component {
           inputProps={{ maxLength: '54' }}
           onChange={this.onChange}
         />
-        <ChipInput
-          fullWidth
-          label="Tags"
-          value={tags}
-          variant="outlined"
-          newChipKeyCodes={[13, 9, 188]}
-          margin="normal"
-          placeholder="Freelance,Beginner,Accountability, ..."
-          onBeforeAdd={this.onTagBeforeAdd}
-          onAdd={this.onTagAdd}
-          onDelete={this.onTagDelete}
-        />
+        {
+          <ChipInput
+            fullWidth
+            label="Tags"
+            value={tags}
+            variant="outlined"
+            margin="normal"
+            placeholder="Freelance,Beginner,Accountability, ..."
+            onBeforeAdd={this.onTagBeforeAdd}
+            onAdd={this.onTagAdd}
+            onDelete={this.onTagDelete}
+            onUpdateInput={this.onTagUpdateInput}
+            error={tagValidation !== ''}
+            helperText={tagValidation}
+            clearInputValueOnChange
+          />
+        }
         <Box mt={3} mb={2}>
           <Divider variant="middle" />
         </Box>

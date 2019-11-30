@@ -1,0 +1,5 @@
+Sitemap: https://flofus.com/sitemap.xml
+
+# global
+User-agent: *
+Disallow:

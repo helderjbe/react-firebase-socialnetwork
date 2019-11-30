@@ -14,7 +14,6 @@ import { ENV_PREFIX, SEARCH_CONFIG } from '../../config';
 
 import InfiniteScroll from 'react-infinite-scroller';
 
-import { withFirebase } from '../../components/Firebase';
 import { withSnackbar } from '../../components/Snackbar';
 
 import Grid from '@material-ui/core/Grid';
@@ -25,7 +24,7 @@ import Typography from '@material-ui/core/Typography';
 import CardContent from '@material-ui/core/CardContent';
 
 import SearchContent from './SearchContent';
-import GroupCard from '../../components/GroupCard';
+import GroupCard from './GroupCard';
 
 const CreateGroupLink = () => (
   <Grid
@@ -48,9 +47,9 @@ const CreateGroupLink = () => (
   </Grid>
 );
 
-const HomePage = ({ callSnackbar, hasMore, refine, hits }) => {
-  let isFetching = false;
+let isFetching = false;
 
+const HomePage = ({ callSnackbar, hasMore, refine, hits }) => {
   const onSentinelIntersection = async () => {
     if (!hasMore || isFetching) return false;
     isFetching = true;
@@ -91,12 +90,13 @@ const HomePage = ({ callSnackbar, hasMore, refine, hits }) => {
 };
 
 HomePage.propTypes = {
-  hits: PropTypes.array.isRequired
+  callSnackbar: PropTypes.func.isRequired,
+  hasMore: PropTypes.bool.isRequired,
+  refine: PropTypes.func,
+  hits: PropTypes.array
 };
 
-const HomePageConnectors = withFirebase(
-  withSnackbar(connectInfiniteHits(HomePage))
-);
+const HomePageConnectors = withSnackbar(connectInfiniteHits(HomePage));
 
 const HomePageWrapper = () => (
   <InstantSearch

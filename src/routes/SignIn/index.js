@@ -6,14 +6,11 @@ import * as ROUTES from '../../constants/routes';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import Container from '@material-ui/core/Container';
-import Avatar from '@material-ui/core/Avatar';
-import Lock from '@material-ui/icons/Lock';
-import Divider from '@material-ui/core/Divider';
 import TextLink from '@material-ui/core/Link';
 import Box from '@material-ui/core/Box';
 import Grid from '@material-ui/core/Grid';
 
-import SignIn from '../../components/SignIn';
+import SignIn from './SignIn';
 
 const SignInPage = () => (
   <Container maxWidth="xs" style={{ padding: 0 }}>
