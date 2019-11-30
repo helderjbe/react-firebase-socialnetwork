@@ -2,7 +2,8 @@
   <a href="https://flofus.com/" rel="noopener" target="_blank"><img width="192" src="./public/android-chrome-192x192.png" alt="Flofus Logo" /></a>
 </p>
 
-<h1 align="center">Flofus - React/Firebase/Material UI/Algolia</h1>
+<a href="https://flofus.com/" rel="noopener" target="_blank"><h1 align="center">Flofus - React/Firebase/Material UI/Algolia</h1></a>
+
 <div align="center">
 Flofus is an open source social network based on groups. You can apply to join, create and quit groups. Once you join a group you can chat in a messenger-like section with other members of the group. Built with <b>React, Firebase, Material UI, Algolia</b>.
 </div>
