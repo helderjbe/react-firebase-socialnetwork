@@ -21,13 +21,7 @@ const client = algoliasearch(
   functions.config().algolia.api_key
 );
 
-const ENV_PREFIX = process.env.GCLOUD_PROJECT.includes('dev')
-  ? 'dev_'
-  : 'prod_';
-
-const ALGOLIA_INDEX_NAME = ENV_PREFIX + functions.config().algolia.index_name;
-
-const MAX_GROUPS = functions.config().groups.max;
+const ALGOLIA_INDEX_NAME = functions.config().algolia.index_name;
 
 /* Groups */
 
@@ -138,10 +132,6 @@ exports.onWriteGroupMember = functions.firestore
           break;
         case 'delete':
           delete newGroups[gid];
-      }
-
-      if (Object.keys(newGroups).length > MAX_GROUPS) {
-        return false;
       }
 
       claims.groups = newGroups;

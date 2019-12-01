@@ -10,7 +10,7 @@ import {
   Configure,
   connectInfiniteHits
 } from 'react-instantsearch-dom';
-import { ENV_PREFIX, SEARCH_CONFIG } from '../../config';
+import { SEARCH_CONFIG } from '../../config';
 
 import InfiniteScroll from 'react-infinite-scroller';
 
@@ -100,7 +100,7 @@ const HomePageConnectors = withSnackbar(connectInfiniteHits(HomePage));
 
 const HomePageWrapper = () => (
   <InstantSearch
-    indexName={ENV_PREFIX + process.env.REACT_APP_ALGOLIA_INDEX_NAME}
+    indexName={process.env.REACT_APP_ALGOLIA_INDEX_NAME}
     searchClient={algoliasearch(SEARCH_CONFIG.appId, SEARCH_CONFIG.searchKey)}
   >
     <HomePageConnectors />

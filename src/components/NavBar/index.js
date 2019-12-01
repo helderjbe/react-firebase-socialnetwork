@@ -21,6 +21,7 @@ import Box from '@material-ui/core/Box';
 
 import Feedback from '@material-ui/icons/Feedback';
 import AccountCircle from '@material-ui/icons/AccountCircle';
+import GitHub from '@material-ui/icons/GitHub';
 import ExitToApp from '@material-ui/icons/ExitToApp';
 import Notifications from '@material-ui/icons/Notifications';
 
@@ -182,6 +183,11 @@ const NavBar = props => {
                 </Tooltip>
               </>
             )}
+            <Tooltip title="Github Repo">
+              <IconButton href="https://github.com/helderjbe/react-firebase-socialnetwork">
+                <GitHub color="secondary" />
+              </IconButton>
+            </Tooltip>
           </Toolbar>
         </AppBar>
       </HideOnScroll>

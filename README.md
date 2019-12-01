@@ -1,62 +1,96 @@
-# Production steps
+<p align="center">
+  <a href="https://flofus.com/" rel="noopener" target="_blank"><img width="192" src="./public/android-chrome-192x192.png" alt="Flofus Logo" /></a>
+</p>
 
-1 - Firebase Public Settings:
-1.1 - Change Public-facing name for OAuth
-1.2 - Change support e-mail
-3 - Firebase Auth
-3.0 - Enable Google auth
-3.1 - Set up Facebook Auth
-3.2 - Set up custom domain for Email templates
-3.3 - Set up custom domain name for Google Auth Redirect (add to Authorised domains in console)
-5 - Firebase production project
-5.1 - Change env variables for production
-6 - Name
-6.1 - Change name in manifest
-6.2 - Change name in src
-6.3 - Change name in title
-6.4 - Change name in Privacy policy
-7 - Icons
-7.1 - Change favicons, manifest.json
-7.2 - Add logo instead of name in main page
-8 - Analytics
+<a href="https://flofus.com/" rel="noopener" target="_blank"><h1 align="center">Flofus - React/Firebase/Material UI/Algolia</h1></a>
 
-# TODO
+<div align="center">
+Flofus is an open source social network based on groups. You can apply to join, create and quit groups. Once you join a group you can chat in a messenger-like section with other members of the group. Built with <b>React, Firebase, Material UI, Algolia</b>.
+</div>
 
-Check written notes
-Hooks
-Refactor imports
+## Features
 
-3 - Add clearData (for users), when users delete an account.
+- Create / Apply to join / Leave groups
+- Full-text search ([Algolia](https://www.algolia.com/)): By title, by description, by tags
+- Add banners to groups and stores in Firebase Storage (uses custom auth tokens)
+- Messenger-like chat with members - all in Firestore
+- Administrate group: ban, promote a member to admin, edit rules of the group and view applications
+- Real-time notifications: when a user applies to a group and when accepted
+- Profile management: edit own details and upload image avatar
+- Google, facebook auth and email/password login
 
-![Flofus Logo](./public/android-chrome-512x512.png)
+# [View live](https://flofus.com/)
 
-# Foobar
+## Requirements
 
-Foobar is a Python library for dealing with word pluralization.
+- [A Firebase project](https://firebase.google.com/) (to use algolia in cloud functions you need Blaze plan - free as well)
+- [An algolia account](https://www.algolia.com/users/sign_up)
 
 ## Installation
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install foobar.
+1. Clone the project `git clone https://github.com/helderjbe/react-firebase-socialnetwork.git`
+2. Run `npm install && cd functions && npm install && cd ..`
+3. [Install Firebase CLI if you haven't already](https://firebase.google.com/docs/cli)
+   1. Create a project in firebase
+   2. Run `firebase init` and follow instructions
+4. Create a _.env_ file and fill in the following:
+
+```
+REACT_APP_API_KEY=[Your firebase API KEY]
+REACT_APP_AUTH_DOMAIN=[Your firebase project domain]
+REACT_APP_DATABASE_URL=[Your firebase database url]
+REACT_APP_PROJECT_ID=[Your firebase project id]
+REACT_APP_STORAGE_BUCKET=[Your firebase storage bucket url]
+
+REACT_APP_ALGOLIA_APP_ID=[Your algolia app id]
+REACT_APP_ALGOLIA_SEARCH_KEY=[Your algolia search key]
+REACT_APP_ALGOLIA_INDEX_NAME=[Your algolia index name (you have to create one in your dashboard)]
+```
+
+5. Firebase functions require a config of its own for some reason, but it's easy anyway. Run:
 
 ```bash
-pip install foobar
+firebase functions:config:set algolia.api_key=[YOUR ALGOLIA API KEY] && \
+firebase functions:config:set algolia.app_id=[YOUR ALGOLIA APP ID] && \
+firebase functions:config:set algolia.index_name=[YOUR ALGOLIA INDEX NAME]
 ```
 
-## Usage
+6. Run `npm start` and enjoy
 
-```python
-import foobar
+## Optional
 
-foobar.pluralize('word') # returns 'words'
-foobar.pluralize('goose') # returns 'geese'
-foobar.singularize('phenomena') # returns 'phenomenon'
-```
+To set up Google auth and Facebook auth you need to activate it in the Firebase Auth section
 
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Pull requests are welcome and much needed.
+For major changes though, please open an issue first to discuss what you would like to change.
 
-Please make sure to update tests as appropriate.
+## TODO
+
+Priority: **High**
+
+- The last admin to leave a group should pass admin rights to another user
+- Subscribe to new messages when viewing groups to get real-time updates outside of the chat
+
+Priority: **Medium**
+
+- Correct accessiblity bugs
+
+Priority: **Low**
+
+- Refactor code with React Hooks (remove components)
+- Redo imports (warnings concerning unused imports)
+- Add redux store to manipulate data more easily
+
+## New feature ideas
+
+- Delete user data upon request
+- Push notifications
+- Upload images, video & audio in chat
+- Report groups
+- Site-wide administration
+- Email notifications
 
 ## License
 

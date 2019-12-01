@@ -1,7 +1,21 @@
 {
-  "name": "social-groups",
-  "version": "0.1.0",
-  "private": true,
+  "name": "react-firebase-socialnetwork",
+  "description": "React/Firebase/Material UI/Algolia open source group social network",
+  "version": "1.0.0",
+  "private": false,
+  "author": "HEsteves",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/helderjbe/react-firebase-socialnetwork"
+  },
+  "keywords": [
+    "react",
+    "firebase",
+    "material-ui",
+    "algolia",
+    "social-network"
+  ],
+  "license": "ISC",
   "dependencies": {
     "@material-ui/core": "^4.7.0",
     "@material-ui/icons": "^4.5.1",
