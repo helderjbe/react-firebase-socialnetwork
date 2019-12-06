@@ -8,6 +8,9 @@
 Flofus is an open source social network based on groups. You can apply to join, create and quit groups. Once you join a group you can chat in a messenger-like section with other members of the group. Built with <b>React, Firebase, Material UI, Algolia</b>.
 </div>
 
+<p align="center">
+<a href="https://flofus.com/" rel="noopener" target="_blank"><img width="850" src="https://helderesteves.com/img/portfolio/flofus.png" alt="Flofus Logo" /></a></p>
+
 ## Features
 
 - Create / Apply to join / Leave groups
