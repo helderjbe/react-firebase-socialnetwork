@@ -70,7 +70,7 @@ const MyGroupsHandler = ({ api, callSnackbar }) => {
       api.doGetIdTokenResult(),
       token => {
         tokenGroups = token.claims.groups;
-        Object.keys(token.claims.groups).forEach(
+        Object.keys(token.claims.groups || {}).forEach(
           (gid, index) =>
             (cancelGetGroups[index] = makeCancelable(
               api.refGroupById(gid).get(),
@@ -110,14 +110,14 @@ const MyGroupsHandler = ({ api, callSnackbar }) => {
 
   return (
     <Grid container spacing={1}>
-      {Object.keys(tokenGroups).length !== sortedData.length && (
+      {Object.keys(tokenGroups || {}).length !== sortedData.length && (
         <Grid item xs={12}>
           <Box width="100%" textAlign="center" my={2}>
             <CircularProgress />
           </Box>
         </Grid>
       )}
-      {Object.keys(tokenGroups).length === 0 && sortedData.length === 0 && (
+      {Object.keys(tokenGroups || {}).length === 0 && sortedData.length === 0 && (
         <Grid item xs={12}>
           <Card>
             <CardContent>

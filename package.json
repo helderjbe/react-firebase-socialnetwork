@@ -44,8 +44,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "production:deploy": "firebase use production && npm run build && firebase deploy && firebase use default",
-    "production:hosting": "firebase use production && npm run build && firebase deploy --only hosting && firebase use default"
+    "production:deploy": "npm run build && firebase deploy",
+    "production:hosting": "npm run build && firebase deploy --only hosting"
   },
   "browserslist": {
     "production": [
