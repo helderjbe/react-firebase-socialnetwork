@@ -48,7 +48,14 @@ class GroupRow extends Component {
     const { bannerUrl } = this.state;
 
     return (
-      <Card style={{ position: 'relative' }}>
+      <Card
+        style={{
+          position: 'relative',
+          backgroundImage: bannerUrl,
+          backgrondSize: 'cover',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
         {bannerUrl && (
           <img
             src={bannerUrl}
@@ -58,7 +65,7 @@ class GroupRow extends Component {
               top: 0,
               left: 0,
               width: '100%',
-              height: 'auto',
+              height: '100%',
               opacity: 0.1
             }}
           />
