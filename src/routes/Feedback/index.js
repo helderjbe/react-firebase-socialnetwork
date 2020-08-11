@@ -9,7 +9,7 @@ import Feedback from '../../components/Feedback';
 import { withProtectedRoute } from '../../components/Session';
 
 const FeedbackPage = ({ authstate }) => (
-  <Card>
+  <Card elevation={2}>
     <CardContent>
       <Typography component="h1" variant="overline" align="center" gutterBottom>
         Feedback
@@ -25,9 +25,9 @@ const FeedbackPage = ({ authstate }) => (
 );
 
 FeedbackPage.propTypes = {
-  authstate: PropTypes.object
+  authstate: PropTypes.object,
 };
 
-const condition = authUser => Boolean(authUser);
+const condition = (authUser) => Boolean(authUser);
 
 export default withProtectedRoute(condition)(FeedbackPage);

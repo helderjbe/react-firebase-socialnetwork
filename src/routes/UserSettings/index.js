@@ -30,7 +30,7 @@ const UserSettingsPage = ({ api, authstate }) => {
   }, [api]);
 
   return (
-    <Card>
+    <Card elevation={2}>
       <CardContent>
         <Typography
           component="h1"
@@ -60,9 +60,9 @@ const UserSettingsPage = ({ api, authstate }) => {
 
 UserSettingsPage.propTypes = {
   api: PropTypes.object.isRequired,
-  authstate: PropTypes.object
+  authstate: PropTypes.object,
 };
 
-const condition = authUser => Boolean(authUser);
+const condition = (authUser) => Boolean(authUser);
 
 export default withProtectedRoute(condition)(withFirebase(UserSettingsPage));

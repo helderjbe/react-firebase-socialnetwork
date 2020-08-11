@@ -10,7 +10,7 @@ import * as ROUTES from '../../../constants/routes';
 
 import {
   withProtectedRoute,
-  withEmailVerification
+  withEmailVerification,
 } from '../../../components/Session';
 import { withSnackbar } from '../../../components/Snackbar';
 
@@ -27,15 +27,15 @@ import {
   Box,
   withStyles,
   Tooltip,
-  Typography
+  Typography,
 } from '@material-ui/core';
 
 import ConfirmAction from '../../../components/ConfirmAction';
 
-const LeaveButton = withStyles(theme => ({
+const LeaveButton = withStyles((theme) => ({
   root: {
-    color: theme.palette.error.main
-  }
+    color: theme.palette.error.main,
+  },
 }))(IconButton);
 
 class MembersGroupPage extends Component {
@@ -46,15 +46,15 @@ class MembersGroupPage extends Component {
     profileIdOpen: null,
     hasMore: true,
     loading: false,
-    admin: false
+    admin: false,
   };
 
   async componentDidMount() {
     const {
       api,
       match: {
-        params: { gid }
-      }
+        params: { gid },
+      },
     } = this.props;
 
     this.fetchMembers();
@@ -77,7 +77,7 @@ class MembersGroupPage extends Component {
   }
 
   handleLeaveDialog = () => {
-    this.setState(state => ({ leaveDialogOpen: !state.leaveDialogOpen }));
+    this.setState((state) => ({ leaveDialogOpen: !state.leaveDialogOpen }));
   };
 
   handleLeave = async () => {
@@ -85,10 +85,10 @@ class MembersGroupPage extends Component {
       authstate,
       api,
       match: {
-        params: { gid }
+        params: { gid },
       },
       history,
-      callSnackbar
+      callSnackbar,
     } = this.props;
 
     this.setState({ loading: true });
@@ -104,13 +104,13 @@ class MembersGroupPage extends Component {
     }
   };
 
-  handleMakeAdmin = async index => {
+  handleMakeAdmin = async (index) => {
     const {
       api,
       match: {
-        params: { gid }
+        params: { gid },
       },
-      callSnackbar
+      callSnackbar,
     } = this.props;
     const { userData, data } = this.state;
 
@@ -120,13 +120,13 @@ class MembersGroupPage extends Component {
 
     try {
       await api.refGroupMemberById(gid, uid).update({
-        role: 'admin'
+        role: 'admin',
       });
       callSnackbar(
         `${name || 'No Name'} is now an admin of this group`,
         'info'
       );
-      this.setState(state => {
+      this.setState((state) => {
         const data = [...state.data];
         data[index].role = 'admin';
         return { data };
@@ -136,13 +136,13 @@ class MembersGroupPage extends Component {
     }
   };
 
-  handleBanUser = async index => {
+  handleBanUser = async (index) => {
     const {
       api,
       match: {
-        params: { gid }
+        params: { gid },
       },
-      callSnackbar
+      callSnackbar,
     } = this.props;
     const { userData, data } = this.state;
 
@@ -154,7 +154,7 @@ class MembersGroupPage extends Component {
       await api.refGroupMemberById(gid, uid).delete();
 
       callSnackbar(`${name || 'No Name'} has been banned`, 'info');
-      this.setState(state => {
+      this.setState((state) => {
         const data = [...state.data];
         data.splice(index, 1);
         return { data };
@@ -172,9 +172,9 @@ class MembersGroupPage extends Component {
     const {
       api,
       match: {
-        params: { gid }
+        params: { gid },
       },
-      callSnackbar
+      callSnackbar,
     } = this.props;
     const { data, hasMore } = this.state;
 
@@ -187,27 +187,24 @@ class MembersGroupPage extends Component {
           .orderBy(orderBy, 'desc')
           .startAfter(data[data.length - 1][orderBy])
           .limit(snapshotLimit)
-      : api
-          .refGroupMembers(gid)
-          .orderBy(orderBy, 'desc')
-          .limit(snapshotLimit);
+      : api.refGroupMembers(gid).orderBy(orderBy, 'desc').limit(snapshotLimit);
 
     this.cancelRequest = makeCancelable(
       query.get(),
-      snapshots => {
-        snapshots.docs.forEach(snapshot => {
+      (snapshots) => {
+        snapshots.docs.forEach((snapshot) => {
           this.cancelRequest2 = makeCancelable(
             api.refUserById(snapshot.id).get(),
-            userSnapshot => {
-              this.setState(state => ({
+            (userSnapshot) => {
+              this.setState((state) => ({
                 data: [...state.data, { ...snapshot.data(), uid: snapshot.id }],
                 userData: {
                   ...state.userData,
-                  [userSnapshot.id]: { ...userSnapshot.data() }
-                }
+                  [userSnapshot.id]: { ...userSnapshot.data() },
+                },
               }));
             },
-            error => callSnackbar(error.message, 'error')
+            (error) => callSnackbar(error.message, 'error')
           );
         });
 
@@ -216,7 +213,7 @@ class MembersGroupPage extends Component {
 
         this.isFetching = false;
       },
-      error => callSnackbar(error.message, 'error')
+      (error) => callSnackbar(error.message, 'error')
     );
   };
 
@@ -227,18 +224,18 @@ class MembersGroupPage extends Component {
       userData,
       leaveDialogOpen,
       loading,
-      admin
+      admin,
     } = this.state;
     const {
       match: {
-        params: { gid }
-      }
+        params: { gid },
+      },
     } = this.props;
 
     return (
       <>
         <Box mb={1}>
-          <Card>
+          <Card elevation={2}>
             <Box display="flex">
               <Box flexGrow={1} display="flex" alignItems="center">
                 <Box mr={2}>
@@ -282,7 +279,7 @@ class MembersGroupPage extends Component {
           {data.map((entry, index) => {
             return (
               <Grid item xs={12} key={`memberrow ${index}`}>
-                <Card>
+                <Card elevation={2}>
                   <MemberRow
                     {...entry}
                     user={userData[entry.uid]}
@@ -319,11 +316,11 @@ MembersGroupPage.propTypes = {
   history: PropTypes.object.isRequired,
   authstate: PropTypes.object,
   match: PropTypes.shape({
-    params: PropTypes.object.isRequired
-  })
+    params: PropTypes.object.isRequired,
+  }),
 };
 
-const condition = authUser => Boolean(authUser);
+const condition = (authUser) => Boolean(authUser);
 
 export default withProtectedRoute(condition)(
   withEmailVerification(withRouter(withSnackbar(MembersGroupPage)))

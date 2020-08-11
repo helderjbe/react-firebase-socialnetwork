@@ -9,7 +9,7 @@ import GroupDetails from '../../../components/GroupDetails';
 
 import {
   withProtectedRoute,
-  withEmailVerification
+  withEmailVerification,
 } from '../../../components/Session';
 import { Box, IconButton, Tooltip, Typography } from '@material-ui/core';
 import { withRouter, Link } from 'react-router-dom';
@@ -21,9 +21,9 @@ import { withFirebase } from '../../../components/Firebase';
 const GroupDetailsPage = ({
   authstate,
   match: {
-    params: { gid }
+    params: { gid },
   },
-  api
+  api,
 }) => {
   const [admin, setAdmin] = useState(false);
 
@@ -40,7 +40,7 @@ const GroupDetailsPage = ({
   }, [api, gid]);
 
   return (
-    <Card>
+    <Card elevation={2}>
       <Box display="flex">
         <Box flexGrow={1} display="flex" alignItems="center">
           <Box mr={2}>
@@ -79,10 +79,10 @@ const GroupDetailsPage = ({
 };
 
 GroupDetailsPage.propTypes = {
-  authstate: PropTypes.object.isRequired
+  authstate: PropTypes.object.isRequired,
 };
 
-const condition = authUser => Boolean(authUser);
+const condition = (authUser) => Boolean(authUser);
 
 export default withProtectedRoute(condition)(
   withEmailVerification(withRouter(withFirebase(GroupDetailsPage)))

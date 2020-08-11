@@ -15,6 +15,7 @@ import { SEARCH_CONFIG } from '../../config';
 import InfiniteScroll from 'react-infinite-scroller';
 
 import { withSnackbar } from '../../components/Snackbar';
+import { withUserSession } from '../../components/Session';
 
 import Grid from '@material-ui/core/Grid';
 import Card from '@material-ui/core/Card';
@@ -34,7 +35,7 @@ const CreateGroupLink = () => (
     to={ROUTES.GROUPS_NEW}
     style={{ textDecoration: 'none' }}
   >
-    <Card>
+    <Card elevation={2}>
       <CardContent>
         <Box textAlign="center" my={1}>
           <Typography variant="caption" color="textSecondary">
@@ -49,7 +50,7 @@ const CreateGroupLink = () => (
 
 let isFetching = false;
 
-const HomePage = ({ callSnackbar, hasMore, refine, hits }) => {
+const HomePage = ({ callSnackbar, hasMore, refine, hits, authstate }) => {
   const onSentinelIntersection = async () => {
     if (!hasMore || isFetching) return false;
     isFetching = true;
@@ -77,10 +78,10 @@ const HomePage = ({ callSnackbar, hasMore, refine, hits }) => {
       }
     >
       <SearchContent />
-      <CreateGroupLink />
+      {hits.length <= 0 && <CreateGroupLink />}
       {hits.map((hit) => (
-        <Grid item xs={12} sm={6} key={hit.objectID}>
-          <Card>
+        <Grid item xs={12} sm={authstate ? 12 : 6} key={hit.objectID}>
+          <Card elevation={2}>
             <GroupCard {...hit} gid={hit.objectID} />
           </Card>
         </Grid>
@@ -96,7 +97,9 @@ HomePage.propTypes = {
   hits: PropTypes.array,
 };
 
-const HomePageConnectors = withSnackbar(connectInfiniteHits(HomePage));
+const HomePageConnectors = withUserSession(
+  withSnackbar(connectInfiniteHits(HomePage))
+);
 
 const HomePageWrapper = () => (
   <InstantSearch

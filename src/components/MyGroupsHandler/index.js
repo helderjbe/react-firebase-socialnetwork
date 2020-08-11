@@ -27,22 +27,18 @@ const MyGroupsHandler = ({ api, callSnackbar }) => {
   const fetchLastMessage = useCallback(
     (gid, index) => {
       cancelGetGroupMessages[index] = makeCancelable(
-        api
-          .refGroupMessages(gid)
-          .orderBy('createdAt', 'desc')
-          .limit(1)
-          .get(),
-        snapshots => {
+        api.refGroupMessages(gid).orderBy('createdAt', 'desc').limit(1).get(),
+        (snapshots) => {
           let messageData = {};
           if (snapshots.docs[0]) {
             messageData = snapshots.docs[0].data();
           }
 
           // data
-          setData(prevData => {
+          setData((prevData) => {
             const updatedData = {
               ...prevData,
-              [gid]: { ...prevData[gid], message: { ...messageData } }
+              [gid]: { ...prevData[gid], message: { ...messageData } },
             };
 
             // sortedData
@@ -50,7 +46,7 @@ const MyGroupsHandler = ({ api, callSnackbar }) => {
 
             // TODO: for now it's sorting the array every time. Best is to insert in the right place and keep it sorted.
             if (datedGroups.length === Object.keys(updatedData).length) {
-              setSortedData(sort(datedGroups).desc(group => group.date));
+              setSortedData(sort(datedGroups).desc((group) => group.date));
             }
 
             return updatedData;
@@ -58,7 +54,7 @@ const MyGroupsHandler = ({ api, callSnackbar }) => {
 
           delete cancelGetGroupMessages[index];
         },
-        error => callSnackbar(error.message, 'error')
+        (error) => callSnackbar(error.message, 'error')
       );
     },
     [api, callSnackbar]
@@ -68,37 +64,37 @@ const MyGroupsHandler = ({ api, callSnackbar }) => {
     let cancelGetGroups = {};
     const cancelGetIdToken = makeCancelable(
       api.doGetIdTokenResult(),
-      token => {
+      (token) => {
         tokenGroups = token.claims.groups;
         Object.keys(token.claims.groups || {}).forEach(
           (gid, index) =>
             (cancelGetGroups[index] = makeCancelable(
               api.refGroupById(gid).get(),
-              doc => {
-                setData(prevData => ({
+              (doc) => {
+                setData((prevData) => ({
                   ...prevData,
-                  [gid]: { ...prevData[gid], ...doc.data() }
+                  [gid]: { ...prevData[gid], ...doc.data() },
                 }));
 
                 fetchLastMessage(gid, index);
 
                 delete cancelGetGroups[index];
               },
-              error => callSnackbar(error.message, 'error')
+              (error) => callSnackbar(error.message, 'error')
             ))
         );
       },
-      error => callSnackbar(error.message, 'error')
+      (error) => callSnackbar(error.message, 'error')
     );
 
     return () => {
       cancelGetIdToken();
 
-      Object.values(cancelGetGroups).forEach(cancelRequest => {
+      Object.values(cancelGetGroups).forEach((cancelRequest) => {
         if (cancelRequest) cancelRequest();
       });
 
-      Object.values(cancelGetGroupMessages).forEach(cancelRequest => {
+      Object.values(cancelGetGroupMessages).forEach((cancelRequest) => {
         if (cancelRequest) cancelRequest();
       });
 
@@ -119,7 +115,7 @@ const MyGroupsHandler = ({ api, callSnackbar }) => {
       )}
       {Object.keys(tokenGroups || {}).length === 0 && sortedData.length === 0 && (
         <Grid item xs={12}>
-          <Card>
+          <Card elevation={2}>
             <CardContent>
               <Typography align="center" variant="body2" color="textSecondary">
                 No groups under your belt yet
@@ -138,7 +134,7 @@ const MyGroupsHandler = ({ api, callSnackbar }) => {
 };
 
 MyGroupsHandler.propTypes = {
-  api: PropTypes.object.isRequired
+  api: PropTypes.object.isRequired,
 };
 
 export default withFirebase(withSnackbar(MyGroupsHandler));

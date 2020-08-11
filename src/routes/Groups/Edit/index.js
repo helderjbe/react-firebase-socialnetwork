@@ -13,7 +13,7 @@ import EditGroup from '../../../components/EditGroup';
 
 import {
   withProtectedRoute,
-  withEmailVerification
+  withEmailVerification,
 } from '../../../components/Session';
 
 import ArrowBack from '@material-ui/icons/ArrowBack';
@@ -21,10 +21,10 @@ import ArrowBack from '@material-ui/icons/ArrowBack';
 const EditGroupPage = ({
   authstate,
   match: {
-    params: { gid }
-  }
+    params: { gid },
+  },
 }) => (
-  <Card>
+  <Card elevation={2}>
     <Box display="flex" alignItems="center">
       <Box mr={2}>
         <Tooltip title="Back">
@@ -49,10 +49,10 @@ const EditGroupPage = ({
 );
 
 EditGroupPage.propTypes = {
-  authstate: PropTypes.object.isRequired
+  authstate: PropTypes.object.isRequired,
 };
 
-const condition = authUser => Boolean(authUser);
+const condition = (authUser) => Boolean(authUser);
 
 export default withProtectedRoute(condition)(
   withEmailVerification(withRouter(EditGroupPage))

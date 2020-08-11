@@ -6,7 +6,7 @@ import Group from '../../../components/Group';
 
 import {
   withProtectedRoute,
-  withEmailVerification
+  withEmailVerification,
 } from '../../../components/Session';
 import { styled } from '@material-ui/styles';
 
@@ -17,20 +17,20 @@ const FullScreenCard = styled(Card)(({ theme }) => ({
   flexDirection: 'column',
   height: `calc(100vh - ${theme.spacing(18)}px)`,
   [theme.breakpoints.up('sm')]: {
-    height: `calc(100vh - ${theme.spacing(12)}px)`
-  }
+    height: `calc(100vh - ${theme.spacing(12)}px)`,
+  },
 }));
 
 const GroupPage = ({ authstate }) => (
-  <FullScreenCard>
+  <FullScreenCard elevation={2}>
     <Group authstate={authstate} />
   </FullScreenCard>
 );
 
 GroupPage.propTypes = {
-  authstate: PropTypes.object.isRequired
+  authstate: PropTypes.object.isRequired,
 };
 
-const condition = authUser => Boolean(authUser);
+const condition = (authUser) => Boolean(authUser);
 
 export default withProtectedRoute(condition)(withEmailVerification(GroupPage));

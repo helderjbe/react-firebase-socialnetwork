@@ -9,7 +9,7 @@ import Box from '@material-ui/core/Box';
 
 const NotFoundPage = () => (
   <Container maxWidth="xs" style={{ padding: 0 }}>
-    <Card>
+    <Card elevation={2}>
       <CardContent>
         <Box my={2} textAlign="center">
           <Error color="primary" style={{ width: 40, height: 40 }} />

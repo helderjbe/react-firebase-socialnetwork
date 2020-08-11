@@ -8,12 +8,12 @@ import NewGroup from '../../../components/NewGroup';
 
 import {
   withProtectedRoute,
-  withEmailVerification
+  withEmailVerification,
 } from '../../../components/Session';
 
 const NewGroupPage = ({ authstate }) => {
   return (
-    <Card>
+    <Card elevation={2}>
       <CardContent>
         <Typography
           component="h1"
@@ -39,10 +39,10 @@ const NewGroupPage = ({ authstate }) => {
 };
 
 NewGroupPage.propTypes = {
-  authstate: PropTypes.object
+  authstate: PropTypes.object,
 };
 
-const condition = authUser => Boolean(authUser);
+const condition = (authUser) => Boolean(authUser);
 
 export default withProtectedRoute(condition)(
   withEmailVerification(NewGroupPage)

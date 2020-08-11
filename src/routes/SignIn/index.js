@@ -14,7 +14,7 @@ import SignIn from './SignIn';
 
 const SignInPage = () => (
   <Container maxWidth="xs" style={{ padding: 0 }}>
-    <Card>
+    <Card elevation={2}>
       <CardContent>
         <SignIn />
         <Box mt={1}>

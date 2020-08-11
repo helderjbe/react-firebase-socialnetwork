@@ -14,7 +14,7 @@ import RecoverEmail from './RecoverEmail';
 class EmailHandlerPage extends Component {
   state = {
     mode: null,
-    actionCode: null
+    actionCode: null,
   };
 
   componentDidMount() {
@@ -22,7 +22,7 @@ class EmailHandlerPage extends Component {
 
     this.setState({
       mode: urlParams.get('mode') || '',
-      actionCode: urlParams.get('oobCode')
+      actionCode: urlParams.get('oobCode'),
     });
   }
 
@@ -59,7 +59,7 @@ class EmailHandlerPage extends Component {
 
     return (
       <Container maxWidth="xs" style={{ padding: 0 }}>
-        <Card>
+        <Card elevation={2}>
           <CardContent>
             <Box my={2} textAlign="center">
               <Build color="primary" style={{ width: 40, height: 40 }} />

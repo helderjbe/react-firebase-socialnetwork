@@ -8,14 +8,14 @@ import { withFirebase } from '../Firebase';
 import { withSnackbar } from '../Snackbar';
 import { Typography, Button, LinearProgress } from '@material-ui/core';
 
-const needsEmailVerification = authstate =>
+const needsEmailVerification = (authstate) =>
   authstate &&
   !authstate.emailVerified &&
   authstate.providerData
-    .map(provider => provider.providerId)
+    .map((provider) => provider.providerId)
     .includes('password');
 
-const withEmailVerification = Component => {
+const withEmailVerification = (Component) => {
   class WithEmailVerification extends React.Component {
     state = { isSent: false, loading: false };
 
@@ -38,9 +38,9 @@ const withEmailVerification = Component => {
 
       return (
         <AuthUserContext.Consumer>
-          {authstate =>
+          {(authstate) =>
             needsEmailVerification(authstate) ? (
-              <Card>
+              <Card elevation={2}>
                 <CardContent>
                   <Typography gutterBottom variant="h6" component="h2">
                     {isSent

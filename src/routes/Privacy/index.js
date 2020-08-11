@@ -5,7 +5,7 @@ import CardContent from '@material-ui/core/CardContent';
 import { Typography, Link } from '@material-ui/core';
 
 const PrivacyPage = () => (
-  <Card>
+  <Card elevation={2}>
     <CardContent>
       <Typography component="h1" variant="h4" align="center" gutterBottom>
         Privacy Policy

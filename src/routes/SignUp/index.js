@@ -16,7 +16,7 @@ import SignUp from '../../components/SignUp';
 
 const SignUpPage = () => (
   <Container maxWidth="xs" style={{ padding: 0 }}>
-    <Card>
+    <Card elevation={2}>
       <CardContent>
         <Avatar style={{ margin: '0 auto 8px auto' }}>
           <LockOpen />

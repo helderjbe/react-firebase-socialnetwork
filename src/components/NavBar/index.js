@@ -51,10 +51,10 @@ const HideOnScroll = ({ children }) => {
 };
 
 HideOnScroll.propTypes = {
-  children: PropTypes.node.isRequired
+  children: PropTypes.node.isRequired,
 };
 
-const NotificationBadge = withStyles(theme => ({
+const NotificationBadge = withStyles((theme) => ({
   badge: {
     backgroundColor: theme.palette.secondary.dark,
     boxShadow: `0 0 0 2px ${theme.palette.secondary.dark}`,
@@ -67,22 +67,22 @@ const NotificationBadge = withStyles(theme => ({
       borderRadius: '50%',
       animation: '$ripple 1.2s infinite ease-in-out',
       border: '1px solid' + theme.palette.primary.dark,
-      content: '""'
-    }
+      content: '""',
+    },
   },
   '@keyframes ripple': {
     '0%': {
       transform: 'scale(.8)',
-      opacity: 1
+      opacity: 1,
     },
     '100%': {
       transform: 'scale(2.4)',
-      opacity: 0
-    }
-  }
+      opacity: 0,
+    },
+  },
 }))(Badge);
 
-const NavBar = props => {
+const NavBar = (props) => {
   const { api, callSnackbar, authstate, notifications } = props;
 
   const [lastNotificationsRead, setLastNotificationsRead] = useState(
@@ -109,14 +109,14 @@ const NavBar = props => {
     setLastNotificationsRead(now);
   };
 
-  const toggleAnchorEl = event => {
-    setAnchorEl(prevAnchorEl => (prevAnchorEl ? null : event.currentTarget));
+  const toggleAnchorEl = (event) => {
+    setAnchorEl((prevAnchorEl) => (prevAnchorEl ? null : event.currentTarget));
   };
 
   return (
     <>
       <HideOnScroll {...props}>
-        <AppBar position="sticky">
+        <AppBar position="sticky" elevation={0}>
           <Toolbar>
             <Box mr="auto">
               <Link to={ROUTES.HOME} style={{ textDecoration: 'none' }}>
@@ -131,7 +131,7 @@ const NavBar = props => {
                         style={{
                           fontFamily: 'Helvetica, Arial, sans-serif',
                           letterSpacing: '0.1em',
-                          textShadow: '4px 4px rgba(0,0,0,0.10)'
+                          textShadow: '4px 4px rgba(0,0,0,0.10)',
                         }}
                       >
                         F<span style={{ fontSize: '0.85em' }}>LOFUS</span>
@@ -159,7 +159,7 @@ const NavBar = props => {
 
                 <Tooltip title="Notifications">
                   <IconButton
-                    onClick={event => {
+                    onClick={(event) => {
                       toggleAnchorEl(event);
                       handleLastNotificationsRead();
                     }}
@@ -200,7 +200,7 @@ NavBar.propTypes = {
   authstate: PropTypes.object,
   api: PropTypes.object.isRequired,
   callSnackbar: PropTypes.func.isRequired,
-  notifications: PropTypes.array.isRequired
+  notifications: PropTypes.array.isRequired,
 };
 
 export default withFirebase(

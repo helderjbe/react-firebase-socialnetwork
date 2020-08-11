@@ -38,19 +38,19 @@ const SignIn = ({ history, api, callSnackbar, authstate }) => {
     if (redirecting) {
       api.auth
         .getRedirectResult()
-        .then(result => {
+        .then((result) => {
           if (result.credential) {
             history.push(ROUTES.SETTINGS);
           }
         })
-        .catch(error => {
+        .catch((error) => {
           callSnackbar(error.message, 'error');
           setLoading(false);
         });
     }
   }, [api.auth, callSnackbar, history, redirecting]);
 
-  const onSubmit = async event => {
+  const onSubmit = async (event) => {
     event.preventDefault();
 
     try {
@@ -85,8 +85,8 @@ const SignIn = ({ history, api, callSnackbar, authstate }) => {
       <Box mb={1.5}>
         <Button
           fullWidth
-          variant="contained"
-          color="secondary"
+          variant="outlined"
+          color="primary"
           onClick={onGoogleSignIn}
         >
           <img
@@ -101,8 +101,8 @@ const SignIn = ({ history, api, callSnackbar, authstate }) => {
       </Box>
       <Button
         fullWidth
-        variant="contained"
-        color="secondary"
+        variant="outlined"
+        color="primary"
         onClick={onFacebookSignIn}
       >
         <img
@@ -127,7 +127,7 @@ const SignIn = ({ history, api, callSnackbar, authstate }) => {
           name="email"
           autoComplete="email"
           value={email}
-          onChange={event => setEmail(event.target.value)}
+          onChange={(event) => setEmail(event.target.value)}
           autoFocus
         />
         <TextField
@@ -139,7 +139,7 @@ const SignIn = ({ history, api, callSnackbar, authstate }) => {
           label="Password"
           type="password"
           value={password}
-          onChange={event => setPassword(event.target.value)}
+          onChange={(event) => setPassword(event.target.value)}
         />
         <Button
           type="submit"

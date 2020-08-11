@@ -9,9 +9,9 @@ import { withRouter } from 'react-router-dom';
 import { withFirebase } from '../Firebase';
 import { withSnackbar } from '../Snackbar';
 
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
+import Accordion from '@material-ui/core/Accordion';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
@@ -31,7 +31,7 @@ const INITIAL_STATE = {
   avatars: {},
   hasMore: true,
   profileIdOpen: null,
-  loading: false
+  loading: false,
 };
 
 class Applications extends Component {
@@ -44,8 +44,8 @@ class Applications extends Component {
   async componentDidUpdate(prevProps) {
     const {
       match: {
-        params: { gid }
-      }
+        params: { gid },
+      },
     } = this.props;
 
     if (gid !== prevProps.match.params.gid) {
@@ -62,9 +62,9 @@ class Applications extends Component {
     const {
       api,
       match: {
-        params: { gid }
+        params: { gid },
       },
-      callSnackbar
+      callSnackbar,
     } = this.props;
     const { data, hasMore } = this.state;
 
@@ -85,10 +85,10 @@ class Applications extends Component {
     try {
       const snapshots = await query.get();
 
-      snapshots.docs.forEach(snapshot => {
+      snapshots.docs.forEach((snapshot) => {
         this.handleUsers(snapshot.id);
-        this.setState(state => ({
-          data: [...state.data, { ...snapshot.data(), uid: snapshot.id }]
+        this.setState((state) => ({
+          data: [...state.data, { ...snapshot.data(), uid: snapshot.id }],
         }));
       });
 
@@ -102,7 +102,7 @@ class Applications extends Component {
     }
   };
 
-  handleUsers = async uid => {
+  handleUsers = async (uid) => {
     const { api, callSnackbar } = this.props;
 
     try {
@@ -112,16 +112,16 @@ class Applications extends Component {
       if (userData && userData.avatar) {
         const url = await api.refUserAvatar(uid).getDownloadURL();
 
-        this.setState(state => ({
-          avatars: { ...state.avatars, [uid]: url }
+        this.setState((state) => ({
+          avatars: { ...state.avatars, [uid]: url },
         }));
       } else {
-        this.setState(state => ({
-          avatars: { ...state.avatars, [uid]: '' }
+        this.setState((state) => ({
+          avatars: { ...state.avatars, [uid]: '' },
         }));
       }
-      this.setState(state => ({
-        users: { ...state.users, [doc.id]: userData || {} }
+      this.setState((state) => ({
+        users: { ...state.users, [doc.id]: userData || {} },
       }));
     } catch (error) {
       callSnackbar(error.message, 'error');
@@ -132,9 +132,9 @@ class Applications extends Component {
     const {
       api,
       match: {
-        params: { gid }
+        params: { gid },
       },
-      callSnackbar
+      callSnackbar,
     } = this.props;
 
     await this.setState({ loading: true });
@@ -154,7 +154,7 @@ class Applications extends Component {
 
       await api.refGroupApplicationById(gid, uid).delete();
 
-      await this.setState(state => {
+      await this.setState((state) => {
         const data = [...state.data];
         data.splice(index, 1);
         return { data, loading: false };
@@ -165,7 +165,7 @@ class Applications extends Component {
     }
   };
 
-  handleProfileIdOpen = profileIdOpen => () => {
+  handleProfileIdOpen = (profileIdOpen) => () => {
     this.setState({ profileIdOpen });
   };
 
@@ -180,7 +180,7 @@ class Applications extends Component {
       profileIdOpen,
       users,
       avatars,
-      loading
+      loading,
     } = this.state;
 
     return (
@@ -216,8 +216,8 @@ class Applications extends Component {
               );
             }
             return (
-              <ExpansionPanel key={`panel ${index}`}>
-                <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+              <Accordion key={`panel ${index}`}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Box display="flex" alignItems="center" justifyContent="left">
                     <Box mr={2}>
                       <Avatar
@@ -244,8 +244,8 @@ class Applications extends Component {
                       </Typography>
                     </div>
                   </Box>
-                </ExpansionPanelSummary>
-                <ExpansionPanelDetails style={{ flexDirection: 'column' }}>
+                </AccordionSummary>
+                <AccordionDetails style={{ flexDirection: 'column' }}>
                   {entry.application &&
                     Object.entries(entry.application).map(
                       ([question, answer], index) =>
@@ -289,8 +289,8 @@ class Applications extends Component {
                     </Button>
                   </Box>
                   {loading && <LinearProgress />}
-                </ExpansionPanelDetails>
-              </ExpansionPanel>
+                </AccordionDetails>
+              </Accordion>
             );
           })}
         </InfiniteScroll>
@@ -311,8 +311,8 @@ class Applications extends Component {
 Applications.propTypes = {
   api: PropTypes.object.isRequired,
   match: PropTypes.shape({
-    params: PropTypes.object.isRequired
-  })
+    params: PropTypes.object.isRequired,
+  }),
 };
 
 export default withRouter(withFirebase(withSnackbar(Applications)));
