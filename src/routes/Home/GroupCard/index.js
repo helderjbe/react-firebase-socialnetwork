@@ -35,15 +35,15 @@ import { CardActionArea, Tooltip } from '@material-ui/core';
 const GroupGridListTileBar = withStyles({
   root: {
     background:
-      'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)'
+      'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)',
   },
   title: {
     fontWeight: 500,
-    fontSize: '1.1rem'
-  }
+    fontSize: '1.1rem',
+  },
 })(GridListTileBar);
 
-const GroupCard = props => {
+const GroupCard = (props) => {
   const {
     gid,
     api,
@@ -58,14 +58,14 @@ const GroupCard = props => {
     updatedAt,
     createdAt,
     details,
-    questions
+    questions,
   } = props;
   const [groupImgSrc, setGroupImgSrc] = useState(defaultBanner);
   const [applicationDialog, setApplicationDialog] = useState(false);
 
   useEffect(() => {
     if (banner) {
-      return makeCancelable(api.refGroupBanner(gid).getDownloadURL(), url =>
+      return makeCancelable(api.refGroupBanner(gid).getDownloadURL(), (url) =>
         setGroupImgSrc(url)
       );
     }
@@ -77,7 +77,7 @@ const GroupCard = props => {
 
   const handleApplicationDialogOpen = async () => {
     if (!authstate) {
-      callSnackbar('Please sign in first to apply to this group', 'warning');
+      callSnackbar('Please sign in first to apply to this group', 'info');
       return history.push(ROUTES.SIGN_IN);
     }
 
@@ -86,7 +86,7 @@ const GroupCard = props => {
     if (
       !authstate.emailVerified &&
       authstate.providerData
-        .map(provider => provider.providerId)
+        .map((provider) => provider.providerId)
         .includes('password')
     ) {
       return callSnackbar(
@@ -202,7 +202,7 @@ GroupCard.propTypes = {
   memberLimit: PropTypes.number,
   tags: PropTypes.arrayOf(PropTypes.string),
   createdAt: PropTypes.number.isRequired,
-  updatedAt: PropTypes.number
+  updatedAt: PropTypes.number,
 };
 
 export default withRouter(
