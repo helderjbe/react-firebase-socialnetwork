@@ -239,70 +239,70 @@ const SearchContent = () => {
   }
 
   return (
-    <>
-      <Grid item xs={12}>
-        <Card elevation={2}>
-          <SearchContainer>
-            <SearchIcon>
-              <LoadingIndicator />
-            </SearchIcon>
-            <SearchInput />
-            <Tooltip title="Create Group">
-              <IconButton component={Link} to={ROUTES.GROUPS_NEW}>
-                <AddCircleOutline />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Show filters">
-              <IconButton
-                onClick={handleExpandClick}
-                aria-expanded={expanded}
-                aria-label="show filters"
-              >
-                {expanded ? <ExpandLess /> : <ExpandMore />}
-              </IconButton>
-            </Tooltip>
-          </SearchContainer>
-        </Card>
-      </Grid>
-      <Collapse
-        component={Grid}
-        item
-        in={expanded}
-        timeout="auto"
-        style={{ width: '100%' }}
-        unmountOnExit
-      >
-        <Card elevation={2}>
-          <CardContent>
-            <Typography variant="body2">Filter by tags</Typography>
-            <Tags attribute="tags" operator="and" limit={6} searchable />
-            <Box mt={3} mb={2}>
-              <Divider variant="middle" />
-            </Box>
-            <Typography variant="body2">Filter by members</Typography>
-            <MemberCountSlider attribute="memberCount" />
-          </CardContent>
-          <Box mx={1} my={1}>
-            <a
-              href="https://www.algolia.com/"
-              rel="noopener noreferrer nofollow"
-              target="_blank"
+    <Box mb={2}>
+      <Card elevation={2}>
+        <SearchContainer>
+          <SearchIcon>
+            <LoadingIndicator />
+          </SearchIcon>
+          <SearchInput />
+          <Tooltip title="Create Group">
+            <IconButton component={Link} to={ROUTES.GROUPS_NEW}>
+              <AddCircleOutline />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Show filters">
+            <IconButton
+              onClick={handleExpandClick}
+              aria-expanded={expanded}
+              aria-label="show filters"
             >
-              <img
-                src={algoliaLogo}
-                style={{
-                  maxWidth: '96px',
-                  height: 'auto',
-                  marginLeft: 'auto',
-                  display: 'block',
-                }}
-                alt="Search by algolia"
-              />
-            </a>
-          </Box>
-        </Card>
-      </Collapse>
-    </>
+              {expanded ? <ExpandLess /> : <ExpandMore />}
+            </IconButton>
+          </Tooltip>
+        </SearchContainer>
+      </Card>
+      <Box mt={1}>
+        <Collapse
+          component={Grid}
+          item
+          in={expanded}
+          timeout="auto"
+          style={{ width: '100%' }}
+          unmountOnExit
+        >
+          <Card elevation={2}>
+            <CardContent>
+              <Typography variant="body2">Filter by tags</Typography>
+              <Tags attribute="tags" operator="and" limit={6} searchable />
+              <Box mt={3} mb={2}>
+                <Divider variant="middle" />
+              </Box>
+              <Typography variant="body2">Filter by members</Typography>
+              <MemberCountSlider attribute="memberCount" />
+            </CardContent>
+            <Box mx={1} my={1}>
+              <a
+                href="https://www.algolia.com/"
+                rel="noopener noreferrer nofollow"
+                target="_blank"
+              >
+                <img
+                  src={algoliaLogo}
+                  style={{
+                    maxWidth: '96px',
+                    height: 'auto',
+                    marginLeft: 'auto',
+                    display: 'block',
+                  }}
+                  alt="Search by algolia"
+                />
+              </a>
+            </Box>
+          </Card>
+        </Collapse>
+      </Box>
+    </Box>
   );
 };
 

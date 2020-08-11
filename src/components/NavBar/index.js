@@ -100,7 +100,7 @@ const NavBar = (props) => {
   const handleSignOut = async () => {
     await api.doSignOut();
 
-    callSnackbar('You have signed out', 'warning');
+    callSnackbar('You have signed out', 'info');
   };
 
   const handleLastNotificationsRead = () => {

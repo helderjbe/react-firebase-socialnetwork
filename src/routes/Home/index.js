@@ -15,7 +15,6 @@ import { SEARCH_CONFIG } from '../../config';
 import InfiniteScroll from 'react-infinite-scroller';
 
 import { withSnackbar } from '../../components/Snackbar';
-import { withUserSession } from '../../components/Session';
 
 import Grid from '@material-ui/core/Grid';
 import Card from '@material-ui/core/Card';
@@ -27,10 +26,10 @@ import CardContent from '@material-ui/core/CardContent';
 import SearchContent from './SearchContent';
 import GroupCard from './GroupCard';
 
+import BreakpointMasonry from '../../components/BreakpointMasonry';
+
 const CreateGroupLink = () => (
-  <Grid
-    item
-    xs={12}
+  <Box
     component={Link}
     to={ROUTES.GROUPS_NEW}
     style={{ textDecoration: 'none' }}
@@ -45,12 +44,12 @@ const CreateGroupLink = () => (
         </Box>
       </CardContent>
     </Card>
-  </Grid>
+  </Box>
 );
 
 let isFetching = false;
 
-const HomePage = ({ callSnackbar, hasMore, refine, hits, authstate }) => {
+const HomePage = ({ callSnackbar, hasMore, refine, hits }) => {
   const onSentinelIntersection = async () => {
     if (!hasMore || isFetching) return false;
     isFetching = true;
@@ -64,10 +63,7 @@ const HomePage = ({ callSnackbar, hasMore, refine, hits, authstate }) => {
   };
 
   return (
-    <Grid
-      component={InfiniteScroll}
-      container
-      spacing={2}
+    <InfiniteScroll
       initialLoad={false}
       loadMore={onSentinelIntersection}
       hasMore={hasMore}
@@ -79,14 +75,16 @@ const HomePage = ({ callSnackbar, hasMore, refine, hits, authstate }) => {
     >
       <SearchContent />
       {hits.length <= 0 && <CreateGroupLink />}
-      {hits.map((hit) => (
-        <Grid item xs={12} sm={authstate ? 12 : 6} key={hit.objectID}>
-          <Card elevation={2}>
-            <GroupCard {...hit} gid={hit.objectID} />
-          </Card>
-        </Grid>
-      ))}
-    </Grid>
+      <BreakpointMasonry>
+        {hits.map((hit) => (
+          <Grid item style={{ marginBottom: '16px' }} key={hit.objectID}>
+            <Card elevation={2}>
+              <GroupCard {...hit} gid={hit.objectID} />
+            </Card>
+          </Grid>
+        ))}
+      </BreakpointMasonry>
+    </InfiniteScroll>
   );
 };
 
@@ -97,9 +95,7 @@ HomePage.propTypes = {
   hits: PropTypes.array,
 };
 
-const HomePageConnectors = withUserSession(
-  withSnackbar(connectInfiniteHits(HomePage))
-);
+const HomePageConnectors = withSnackbar(connectInfiniteHits(HomePage));
 
 const HomePageWrapper = () => (
   <InstantSearch
