@@ -39,10 +39,10 @@ import NavBar from './components/NavBar';
 import SideBar from './components/SideBar';
 import BottomNav from './components/BottomNav';
 
-const MainContainer = withStyles(theme => ({
+const MainContainer = withStyles((theme) => ({
   root: {
-    marginTop: theme.spacing(2)
-  }
+    marginTop: theme.spacing(2),
+  },
 }))(Container);
 
 const routesList = [
@@ -61,7 +61,7 @@ const routesList = [
   { path: ROUTES.EMAIL_HANDLER, component: EmailHandlerPage },
   { path: ROUTES.FEEDBACK, component: FeedbackPage },
   { path: ROUTES.PRIVACY, component: PrivacyPage },
-  { component: NotFoundPage }
+  { component: NotFoundPage },
 ];
 
 const App = ({ authstate }) => (
@@ -70,7 +70,7 @@ const App = ({ authstate }) => (
     <MainContainer maxWidth={'md'}>
       <main>
         <Grid container spacing={2} justify="center">
-          <Grid item sm={8} xs={12}>
+          <Grid item sm={authstate ? 8 : 12} xs={12}>
             <Switch>
               {routesList.map((props, index) => (
                 <Route {...props} key={`Route${index}`} />
@@ -100,7 +100,7 @@ const App = ({ authstate }) => (
 );
 
 App.propTypes = {
-  authstate: PropTypes.object
+  authstate: PropTypes.object,
 };
 
 export default withAuthState(

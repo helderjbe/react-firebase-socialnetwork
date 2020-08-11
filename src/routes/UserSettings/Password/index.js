@@ -7,7 +7,7 @@ import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import { Typography, LinearProgress } from '@material-ui/core';
 
-const UserEmail = ({ api, authstate, callSnackbar }) => {
+const UserPassword = ({ api, authstate, callSnackbar }) => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -20,7 +20,7 @@ const UserEmail = ({ api, authstate, callSnackbar }) => {
     setLoading(false);
   };
 
-  const reAuth = currentPassword => {
+  const reAuth = (currentPassword) => {
     const credentials = api.firebase.auth.EmailAuthProvider.credential(
       authstate.email,
       currentPassword
@@ -28,14 +28,14 @@ const UserEmail = ({ api, authstate, callSnackbar }) => {
     return authstate.reauthenticateWithCredential(credentials);
   };
 
-  const onSubmit = async event => {
+  const onSubmit = async (event) => {
     event.preventDefault();
 
     setLoading(true);
 
     try {
-      await reAuth(password);
-      await authstate.updatePassword(currentPassword);
+      await reAuth(currentPassword);
+      await authstate.updatePassword(password);
       callSnackbar('Password updated successfully', 'success');
       setInitialState();
     } catch (error) {
@@ -63,7 +63,7 @@ const UserEmail = ({ api, authstate, callSnackbar }) => {
         label="Current Password"
         name="currentPassword"
         value={currentPassword}
-        onChange={event => setCurrentPassword(event.target.value)}
+        onChange={(event) => setCurrentPassword(event.target.value)}
         helperText="Type your current password to proceed"
       />
       <TextField
@@ -74,7 +74,7 @@ const UserEmail = ({ api, authstate, callSnackbar }) => {
         label="New Password"
         name="password"
         value={password}
-        onChange={event => setPassword(event.target.value)}
+        onChange={(event) => setPassword(event.target.value)}
       />
       <TextField
         variant="outlined"
@@ -84,7 +84,7 @@ const UserEmail = ({ api, authstate, callSnackbar }) => {
         label="Confirm Password"
         name="confirmPassword"
         value={confirmPassword}
-        onChange={event => setConfirmPassword(event.target.value)}
+        onChange={(event) => setConfirmPassword(event.target.value)}
       />
       <Button
         type="submit"
@@ -101,4 +101,4 @@ const UserEmail = ({ api, authstate, callSnackbar }) => {
   );
 };
 
-export default withFirebase(withSnackbar(UserEmail));
+export default withFirebase(withSnackbar(UserPassword));

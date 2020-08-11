@@ -50,7 +50,7 @@ exports.onWriteGroup = functions.firestore
       searchableAttributes: ['title', 'unordered(details)'],
       attributesForFaceting: ['searchable(tags)', 'memberCount'],
       customRanking: ['desc(updatedAt)', 'desc(createdAt)'],
-      removeStopWords: true
+      removeStopWords: true,
     });
 
     // Saving logic
@@ -84,7 +84,7 @@ exports.onCreateGroup = functions.firestore
       .doc(data.founder)
       .set({
         createdAt: Timestamp.now().toMillis(),
-        role: 'admin'
+        role: 'admin',
       });
   });
 
@@ -137,10 +137,7 @@ exports.onWriteGroupMember = functions.firestore
       claims.groups = newGroups;
 
       await auth.setCustomUserClaims(uid, claims);
-      await firestore
-        .collection('userClaims')
-        .doc(uid)
-        .set(newGroups);
+      await firestore.collection('userClaims').doc(uid).set(newGroups);
     }
 
     return true;
@@ -151,10 +148,7 @@ exports.onDeleteGroupMember = functions.firestore
   .onDelete(async (_snap, context) => {
     const gid = context.params.gid;
 
-    const doc = await firestore
-      .collection('groups')
-      .doc(gid)
-      .get();
+    const doc = await firestore.collection('groups').doc(gid).get();
 
     if (doc.data().memberCount <= 1) {
       return deleteGroup(gid);
@@ -188,7 +182,7 @@ exports.onCreateApplication = functions.firestore
       .limit(15)
       .get();
 
-    return snapshots.docs.forEach(snapshot => {
+    return snapshots.docs.forEach((snapshot) => {
       firestore
         .collection('users')
         .doc(snapshot.id)
@@ -197,7 +191,7 @@ exports.onCreateApplication = functions.firestore
           createdAt: Timestamp.now().toMillis(),
           type: 'application',
           uid,
-          gid
+          gid,
         });
     });
   });
@@ -216,18 +210,13 @@ exports.onDeleteApplication = functions.firestore
     }
 
     // add member to group in firestore
-    firestore
-      .collection('groups')
-      .doc(gid)
-      .collection('members')
-      .doc(uid)
-      .set(
-        {
-          createdAt: Timestamp.now().toMillis(),
-          role: 'member'
-        },
-        { merge: true }
-      );
+    firestore.collection('groups').doc(gid).collection('members').doc(uid).set(
+      {
+        createdAt: Timestamp.now().toMillis(),
+        role: 'member',
+      },
+      { merge: true }
+    );
 
     // notify user of application accepted
     return firestore
@@ -237,7 +226,7 @@ exports.onDeleteApplication = functions.firestore
       .add({
         createdAt: Timestamp.now().toMillis(),
         type: 'accepted',
-        gid
+        gid,
       });
   });
 
@@ -254,14 +243,14 @@ function deleteGroup(gid) {
     .bucket(JSON.parse(process.env.FIREBASE_CONFIG).storageBucket)
     .deleteFiles({
       force: true,
-      prefix: `groups/${gid}/`
+      prefix: `groups/${gid}/`,
     });
 
   // Delete DB
   return firebase_tools.firestore.delete(`groups/${gid}`, {
     project: process.env.GCLOUD_PROJECT,
     recursive: true,
-    yes: true
+    yes: true,
   });
 }
 
@@ -272,14 +261,14 @@ function updateMemberCount(gid, value) {
       .doc(gid)
       .update({
         updatedAt: Timestamp.now().toMillis(),
-        memberCount: FieldValue.increment(value)
+        memberCount: FieldValue.increment(value),
       });
   } else {
     return firestore
       .collection('groups')
       .doc(gid)
       .update({
-        memberCount: FieldValue.increment(value)
+        memberCount: FieldValue.increment(value),
       });
   }
 }

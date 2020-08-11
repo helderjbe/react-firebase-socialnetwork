@@ -8,7 +8,7 @@ import algoliasearch from 'algoliasearch/lite';
 import {
   InstantSearch,
   Configure,
-  connectInfiniteHits
+  connectInfiniteHits,
 } from 'react-instantsearch-dom';
 import { SEARCH_CONFIG } from '../../config';
 
@@ -78,8 +78,8 @@ const HomePage = ({ callSnackbar, hasMore, refine, hits }) => {
     >
       <SearchContent />
       <CreateGroupLink />
-      {hits.map(hit => (
-        <Grid item xs={12} key={hit.objectID}>
+      {hits.map((hit) => (
+        <Grid item xs={12} sm={6} key={hit.objectID}>
           <Card>
             <GroupCard {...hit} gid={hit.objectID} />
           </Card>
@@ -93,7 +93,7 @@ HomePage.propTypes = {
   callSnackbar: PropTypes.func.isRequired,
   hasMore: PropTypes.bool.isRequired,
   refine: PropTypes.func,
-  hits: PropTypes.array
+  hits: PropTypes.array,
 };
 
 const HomePageConnectors = withSnackbar(connectInfiniteHits(HomePage));
