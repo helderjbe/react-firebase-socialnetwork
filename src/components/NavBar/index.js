@@ -131,7 +131,6 @@ const NavBar = (props) => {
                         style={{
                           fontFamily: 'Helvetica, Arial, sans-serif',
                           letterSpacing: '0.1em',
-                          textShadow: '4px 4px rgba(0,0,0,0.10)',
                         }}
                       >
                         F<span style={{ fontSize: '0.85em' }}>LOFUS</span>
