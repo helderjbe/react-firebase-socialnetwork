@@ -1,3 +1,5 @@
+# DEPRECATED
+
 <p align="center">
   <a href="https://flofus.com/" rel="noopener" target="_blank"><img width="192" src="./public/android-chrome-192x192.png" alt="Flofus Logo" /></a>
 </p>
